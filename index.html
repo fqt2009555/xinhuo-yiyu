@@ -1591,6 +1591,12 @@
   var SRC = [];   /* FORCE_LOCAL 永久开启，不再加载云 SDK；若未来关闭 FORCE_LOCAL，需重新放置 SDK 并配 endpoint */
   var TIMEOUT = 5000, i = 0;
   function next() {
+    /* 通用 LLM 桥接模式：ai-openai-bridge.js 已伪装成 WorkBuddyCloud 全局对象，
+       直接 initAI 即可走实时大模型；此分支优先于 FORCE_LOCAL。 */
+    if (window.AI_CONFIG && window.AI_CONFIG.mode === 'openai' && !window.AI_CONFIG.FORCE_LOCAL) {
+      if (window.initAI) window.initAI();
+      return;
+    }
     if (window.AI_CONFIG && window.AI_CONFIG.FORCE_LOCAL) {
       if (window.initAI) window.initAI();   /* 触发 initAI：WorkBuddyCloud 未定义 → 走本地降级分支 */
       return;
@@ -1622,6 +1628,7 @@
 </head>
 <body>
 <script src="ai-config.js"></script>
+<script src="ai-openai-bridge.js"></script>
 <div class="phone">
   <div class="statusbar"><span>9:41</span><span>🔋 100%</span></div>
   <div class="navbar">
