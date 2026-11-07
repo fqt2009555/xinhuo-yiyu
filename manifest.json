@@ -1,0 +1,21 @@
+{
+  "name": "薪火医语 · 医学人文科普",
+  "short_name": "薪火医语",
+  "description": "六大板块 3D 知识星图、医患情景演练、院史长廊与 AI 科普问答。",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "start_url": "./?from=homescreen",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "fullscreen"],
+  "orientation": "portrait",
+  "background_color": "#0B0E26",
+  "theme_color": "#0B0E26",
+  "categories": ["education", "medical"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon-1024.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any" }
+  ]
+}
