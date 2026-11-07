@@ -563,6 +563,11 @@
 
   .daily .d-head { display:flex; align-items:baseline; justify-content:space-between; }
   .d-date { font-size:calc(10px * var(--fz)); color:var(--muted); }
+  .camp-link { margin:10px 0 4px; padding:9px 12px; border-radius:10px; background:rgba(143,168,239,.10); color:#C7D6FF; font-size:calc(13.5px * var(--fz)); cursor:pointer; }
+  .phone.day .camp-link { background:rgba(91,141,239,.08); color:#2B4C9B; }
+  .camp-ok { margin:8px 0; padding:9px 12px; border-radius:10px; background:rgba(45,180,110,.12); color:#8EE3B4; font-size:calc(13.5px * var(--fz)); }
+  .phone.day .camp-ok { background:rgba(31,143,69,.10); color:#1F8F45; }
+  .camp-retry { margin:8px 0; padding:9px 12px; border-radius:10px; background:rgba(235,170,80,.12); color:#F3C888; font-size:calc(13.5px * var(--fz)); }
   .d-done {
     display:flex; align-items:baseline; gap:8px; margin-top:10px; padding:8px 10px; border-radius:8px;
     background:rgba(123,216,138,.10); border:1px solid rgba(123,216,138,.32);
@@ -1635,7 +1640,7 @@
     <span id="navTitle">薪火医语</span>
     <!-- v6.48：版本号挪进顶栏右侧空白区。原来挂在 .phone 上 bottom:6px，
          正好压在底部标签栏的「我的」上（真机截图实测）。 -->
-    <span class="ver" title="构建标识">v6.53</span>
+    <span class="ver" title="构建标识">v6.54</span>
   </div>
 
   <div class="screen" id="screen"></div>
@@ -24765,7 +24770,9 @@ function freshState(){
     pstat:[{a:0,c:0},{a:0,c:0},{a:0,c:0},{a:0,c:0},{a:0,c:0},{a:0,c:0}],
     read:[0,0,0,0,0,0], hist:{}, rset:{},
     /* 「接着上次看」：记住最后读到哪一篇，回访时能一键续上 */
-    lastRead:{}};
+    lastRead:{},
+    /* 14 天课程化体验营：days 记录每天达标情况，correctTotal 累计答对题数 */
+    camp:{days:{},correctTotal:0,grad:'',gradDate:'',certNo:''}};
 }
 var state;
 try { state = JSON.parse(localStorage.getItem('xfyy')||'null'); } catch(e) { state = null; }
@@ -24776,6 +24783,9 @@ if(state.quiz.bestCombo===undefined) state.quiz.bestCombo=0;
 if(state.quiz.answered===undefined) state.quiz.answered=0;
 if(state.quiz.correct===undefined) state.quiz.correct=0;
 if(!state.daily) state.daily={date:'',score:0,streak:0,lastDone:''};
+if(!state.camp || typeof state.camp!=='object') state.camp={days:{},correctTotal:0,grad:'',gradDate:'',certNo:''};
+if(!state.camp.days || typeof state.camp.days!=='object') state.camp.days={};
+if(state.camp.correctTotal===undefined) state.camp.correctTotal=0;
 if(!state.badges) state.badges={};
 if(!state.week) state.week={start:'',points:0};
 if(state.checkDate===undefined) state.checkDate='';   // 打卡日期持久化，防止刷新后重复打卡
@@ -26924,7 +26934,7 @@ function timeoutWrong(){
 }
 
 /* 版本号：显示在「我的」页底部，用来确认手机上打开的是不是最新版（缓存排查用） */
-var APP_VER='v6.53';
+var APP_VER='v6.54';
 /* 右下角构建标识跟着版本号走：以前写死在 HTML 里，升版会忘了改，截图对不上号 */
 (function(){
   function sync(){ var el=document.querySelector('.ver'); if(el) el.textContent=APP_VER; }
@@ -27730,7 +27740,236 @@ var BANK=[
     opts: ['只做手术', '成立地方病研究所、调研并开展预防', '只培养护士', '只收治军人'],
     a: '成立地方病研究所、调研并开展预防',
     explain: '1943 年对各科五年疾病做排序并提出防治建议，「一边看病、一边教人防病」。',
-    src: '不止治病：预防的传统一直没断' }
+    src: '不止治病：预防的传统一直没断' },
+
+  /* ===== 第一批扩充（38 题 · 逐条据科普库原文提炼） ===== */
+  { p: 0, q: '大出血时，首选的止血方式是？',
+    opts: ['用铁丝或细绳扎紧近心端', '干净敷料直接压迫 10 分钟以上', '立即涂抹止血药粉', '抬高患肢即可，不必压迫'],
+    a: '干净敷料直接压迫 10 分钟以上',
+    explain: '直接压迫是首选：用无菌敷料或干净布料持续用力压 10 分钟以上，不要每隔一会儿掀开看；敷料浸透不撕掉，在上面再加一层继续压。止血带只在四肢大出血且压迫无效时才用。',
+    src: '大出血：压迫为主，止血带为辅' },
+
+  { p: 0, q: '骨折现场处理，下列哪项正确？',
+    opts: ['先把骨头推回原位再固定', '就地取材固定，不试图复位', '立刻用力按摩消肿', '马上搀扶患者走动'],
+    a: '就地取材固定，不试图复位',
+    explain: '不要试图把骨头复位，也不要强行拉直；固定材料长度要超过骨折处上下两个关节。开放性骨折先覆盖伤口，不把露出的骨端推回去。',
+    src: '骨折：固定后再说搬运' },
+
+  { p: 0, q: '崴脚扭伤后 48 小时内，正确的处理是？',
+    opts: ['热敷并用力揉开淤血', '马上贴活血膏药、推拿正骨', '休息、冰敷、加压、抬高', '忍痛多走动把筋走开'],
+    a: '休息、冰敷、加压、抬高',
+    explain: '伤后 48 小时内遵循「休息—冰敷—加压—抬高」：冰袋隔毛巾敷 15—20 分钟、每 1—2 小时一次，抬高患肢高于心脏。当天不要揉搓、热敷、贴活血膏药。',
+    src: '崴脚扭伤：别马上揉和热敷' },
+
+  { p: 0, q: '发现有人触电，第一步应该？',
+    opts: ['立刻用手把人拉开', '先切断电源，无法断电时用干燥木棍挑开电线', '先泼水降温', '先做人工呼吸'],
+    a: '先切断电源，无法断电时用干燥木棍挑开电线',
+    explain: '先拉闸、拔插头；绝不能用手直接接触伤者。无法断电时用干燥木棍、塑料制品挑开电线。高压电击伤须在确保断电后由专业人员处理。',
+    src: '电击伤：先断电，再救人' },
+
+  { p: 0, q: '严重过敏反应第一时间应该用什么？',
+    opts: ['口服抗组胺药', '肾上腺素（大腿外侧肌注）', '静脉输葡萄糖', '先观察半小时'],
+    a: '肾上腺素（大腿外侧肌注）',
+    explain: '接触过敏原后数分钟出现全身风团、口唇舌肿胀、声音嘶哑、血压下降，应立即拨 120 并使用肾上腺素自动注射笔。抗组胺药起效慢，不能替代肾上腺素。',
+    src: '严重过敏反应：第一时间用肾上腺素' },
+
+  { p: 0, q: '婴儿呛奶，第一步应该？',
+    opts: ['立刻竖抱拍背', '侧卧或头偏向一侧，清理口鼻可见奶液', '用手指深入咽喉抠出奶块', '马上喂水顺下去'],
+    a: '侧卧或头偏向一侧，清理口鼻可见奶液',
+    explain: '立即停止喂奶，让婴儿侧卧或头偏向一侧防止再吸入；用纱布缠手指清理口鼻可见奶液，不要深入抠。面色发绀、哭不出声才按婴儿气道梗阻处理。',
+    src: '婴儿呛奶：先侧头，再拍背' },
+
+  { p: 0, q: '抽搐持续超过多久要立即拨打 120？',
+    opts: ['1 分钟', '3 分钟', '5 分钟', '30 分钟'],
+    a: '5 分钟',
+    explain: '抽搐持续超过 5 分钟，或连续发作中间意识未恢复，属于癫痫持续状态，立即拨 120。同时移开硬物、垫软物护头、侧卧防误吸，不要掐人中、不要塞东西进嘴。',
+    src: '癫痫持续状态：超过 5 分钟要叫救护车' },
+
+  { p: 0, q: '头部外伤后，迟发性颅内出血风险最高的是？',
+    opts: ['前 2 小时', '前 24 小时', '第 3 天', '一周后'],
+    a: '前 24 小时',
+    explain: '头部受击后即使当时清醒，也可能出现迟发性颅内出血，前 24 小时风险最高；夜间每隔 2—3 小时叫醒确认反应。昏迷过、呕吐两次以上、瞳孔不等大要立即就医。',
+    src: '头部外伤后 24 小时最关键' },
+
+  { p: 1, q: '肩颈放松，下列哪种做法正确？',
+    opts: ['快速大幅度甩头画圈', '缓慢用头「写米字」，到轻微牵拉感就停', '用力左右扳动颈椎', '长时间低头后再猛仰头'],
+    a: '缓慢用头「写米字」，到轻微牵拉感就停',
+    explain: '每个动作到轻微牵拉感就停，保持 2—3 秒，一套约 2 分钟；先热敷 10—15 分钟再活动效果更好。颈椎已有明显退变、椎间盘突出的人更要避免甩头画圈。',
+    src: '肩颈放松：写米字别画圈' },
+
+  { p: 1, q: '搬重物的正确姿势是？',
+    opts: ['弯腰直腿，双手探身去够', '屈膝下蹲、腰背挺直，用腿部力量起身', '原地拧腰转身省一步', '屏住气猛地发力'],
+    a: '屈膝下蹲、腰背挺直，用腿部力量起身',
+    explain: '靠近物体、双脚与肩同宽，让物体贴近身体，全程不弯腰扭转；转身时先动脚再动腰。弯腰搬物时腰椎间盘压力可成倍增加。',
+    src: '搬重物：蹲下去，别弯腰' },
+
+  { p: 1, q: '成人每天建议摄入多少膳食纤维？',
+    opts: ['5—10 克', '15—20 克', '25—30 克', '50 克以上'],
+    a: '25—30 克',
+    explain: '成人每天建议 25—30 克，多数人实际只吃到一半。来源为全谷物、杂豆、蔬菜 300—500 克、水果 200—350 克等；增加要循序渐进并多喝水，水果不要榨汁。',
+    src: '膳食纤维：肠道的口粮' },
+
+  { p: 1, q: '哪种打鼾需要警惕睡眠呼吸暂停？',
+    opts: ['均匀轻微、翻身后消失', '响亮不规律，中间有停顿再猛吸气', '只在感冒时出现', '只在白天躺着时出现'],
+    a: '响亮不规律，中间有停顿再猛吸气',
+    explain: '伴白天嗜睡、晨起头痛口干要警惕睡眠呼吸暂停；夜间反复缺氧与高血压、心律失常、脑卒中、血糖异常相关。确诊需做睡眠监测。',
+    src: '打鼾：别当成睡得香' },
+
+  { p: 1, q: '关于真性近视，下列说法正确的是？',
+    opts: ['按摩、针灸能把眼轴缩回去', '真性近视不可逆，能做的是延缓加深', '戴低度数眼镜能治好', '成年后激光手术能消除眼底风险'],
+    a: '真性近视不可逆，能做的是延缓加深',
+    explain: '真性近视是眼轴变长，属结构性改变，任何按摩、针灸、训练都不能「缩回去」；能做的是每天户外 2 小时、20-20-20 用眼、定期复查。激光手术可「摘镜」，但眼底风险不消失。',
+    src: '近视能「治好」吗' },
+
+  { p: 1, q: '眼保健操的主要作用是？',
+    opts: ['治愈真性近视', '放松眼周肌肉、缓解视疲劳', '降低眼压', '替代户外活动'],
+    a: '放松眼周肌肉、缓解视疲劳',
+    explain: '正确做眼保健操能放松眼周肌肉、缓解视疲劳，但不能预防近视加深；关键是闭眼休息让眼睛离开屏幕和书本。手要洗干净、力度轻，别按压眼球。',
+    src: '眼保健操有用吗' },
+
+  { p: 1, q: '针眼（麦粒肿）早期应如何处理？',
+    opts: ['用力挤压把脓挤出来', '40℃ 左右热敷，每次 10—15 分钟', '立刻挑破脓点', '涂激素眼膏并包扎'],
+    a: '40℃ 左右热敷，每次 10—15 分钟',
+    explain: '早期热敷 40℃ 左右、每次 10—15 分钟、每天 3—4 次，多数可自行消退。严禁挤压，面部「危险三角区」感染可逆行入颅；反复发作要查血糖。',
+    src: '针眼（麦粒肿）别挤' },
+
+  { p: 1, q: '「鼠标手」的典型早期信号是？',
+    opts: ['小指和无名指麻木', '拇指、食指、中指麻木，夜间麻醒、甩手后缓解', '手腕红肿发热', '手指关节变形'],
+    a: '拇指、食指、中指麻木，夜间麻醒、甩手后缓解',
+    explain: '早期靠休息：腕部中立位、使用腕托、每小时活动手腕，夜间可戴腕部支具。持续不缓解需做神经传导检查。',
+    src: '鼠标手：手腕发麻要早休息' },
+
+  { p: 2, q: '「崴脚后马上热敷、用力揉开」对吗？',
+    opts: ['对，能把淤血揉散', '错，48 小时内会加重出血与肿胀', '对，但只能揉 5 分钟', '对，只要不热敷就行'],
+    a: '错，48 小时内会加重出血与肿胀',
+    explain: '伤后 48 小时内热敷和揉搓会加重出血与肿胀。急性期应冷敷、加压、抬高、减少负重；冰袋隔毛巾敷 15—20 分钟、每 1—2 小时一次，48 小时后肿消再考虑热敷。',
+    src: '崴脚马上热敷、用力揉开？' },
+
+  { p: 2, q: '鱼刺卡喉，喝醋、吞饭团的做法？',
+    opts: ['有效，醋能软化鱼刺', '有效，饭团能把刺带下去', '错，吞饭团可能把刺推得更深，甚至伤及大血管', '错，但喝大量醋仍然可取'],
+    a: '错，吞饭团可能把刺推得更深，甚至伤及大血管',
+    explain: '醋在咽喉停留不过几秒，软化不了鱼刺；吞饭团会把刺推得更深，可能刺穿食管、伤及邻近大血管。该做的是立即停止进食，看不到刺就到耳鼻喉科。',
+    src: '鱼刺卡喉，喝醋能软化？' },
+
+  { p: 2, q: '昏迷的人要赶紧喂水喂药，对吗？',
+    opts: ['对，能补充体力', '对，速效救心丸能救命', '错，吞咽反射消失，喂任何东西都可能误吸窒息', '错，但喂少量温水是安全的'],
+    a: '错，吞咽反射消失，喂任何东西都可能误吸窒息',
+    explain: '昏迷者吞咽反射消失，喂任何东西都可能误吸进气管造成窒息。该做的是判断意识与呼吸：有呼吸取侧卧位、解开衣领、保持气道通畅；无呼吸立即心肺复苏。',
+    src: '昏迷的人要赶紧喂水喂药？' },
+
+  { p: 2, q: '割伤后撒烟灰、面粉止血，这种做法？',
+    opts: ['无菌有效，可以常用', '错，粉末不无菌，增加破伤风与感染风险', '对，但只能撒在浅表擦伤', '对，比直接压迫更快'],
+    a: '错，粉末不无菌，增加破伤风与感染风险',
+    explain: '这些粉末不无菌，会造成伤口污染、异物残留、清创困难。该做的是用干净纱布或毛巾直接压迫 10 分钟；出血不止尽快就医清创并评估破伤风。',
+    src: '割伤后撒烟灰、面粉能止血？' },
+
+  { p: 2, q: '「晚上 11 点到 1 点肝排毒，必须睡着」的说法？',
+    opts: ['正确，器官按钟点值班', '正确，但只针对肝脏', '伪科学，肝肾 24 小时持续工作', '正确，但只针对老年人'],
+    a: '伪科学，肝肾 24 小时持续工作',
+    explain: '肝脏、肾脏 24 小时持续工作，不存在按钟点「值班」的说法。规律作息的意义在于睡眠总量和生物钟稳定，而不是卡某个时间点硬睡。',
+    src: '「器官排毒时间表」是真的吗？' },
+
+  { p: 2, q: '关于抗生素，下列说法正确的是？',
+    opts: ['抗生素能治病毒性感冒', '抗生素只杀细菌，对病毒性感冒无效', '「消炎药」和抗生素完全是一回事', '嗓子疼可以自行购买抗生素服用'],
+    a: '抗生素只杀细菌，对病毒性感冒无效',
+    explain: '老百姓说的消炎药多指抗生素，但抗生素只杀细菌；真正的抗炎药是另一类（如布洛芬）。普通感冒不用抗生素，是否需要使用由医生判断，别自行购买服用。',
+    src: '「消炎药」就是抗生素？' },
+
+  { p: 2, q: '抽搐时往嘴里塞东西的做法？',
+    opts: ['对，能防止咬断舌头', '对，但要塞软毛巾', '错，舌头极少被咬断，强行撬嘴会磕掉牙齿、堵塞气道', '错，但塞压舌板是安全的'],
+    a: '错，舌头极少被咬断，强行撬嘴会磕掉牙齿、堵塞气道',
+    explain: '抽搐时舌头会后坠但极少被咬断；强行撬嘴还会让施救者被咬伤。该做的是移开硬物、垫软物护头、解开衣领、侧卧防误吸、记录持续时间。超过 5 分钟不停立即拨 120。',
+    src: '抽搐时往嘴里塞东西？' },
+
+  { p: 2, q: '烫伤后用冰块直接敷，正确吗？',
+    opts: ['正确，降温越快越好', '正确，但要隔着毛巾', '错，会加重组织损伤甚至造成冻伤', '错，但冰块比凉水更适合小面积烫伤'],
+    a: '错，会加重组织损伤甚至造成冻伤',
+    explain: '冰块温度过低，会让局部血管剧烈收缩，加重组织损伤，甚至造成冻伤。该做的是用 15—25℃ 流动凉水冲 15—20 分钟；不要涂牙膏、酱油、香油，起水疱不要挑破。',
+    src: '烫伤后能用冰块敷吗' },
+
+  { p: 3, q: '检查前说的「空腹」，一般指禁食多久？',
+    opts: ['2—4 小时', '4—6 小时', '8—12 小时', '24 小时'],
+    a: '8—12 小时',
+    explain: '一般指检查前一日正常晚餐后不再进食，禁食 8—12 小时，可少量喝白水；抽血最好安排在上午，饿太久也会影响结果。化验前 3 天避免大量饮酒、高脂饮食和剧烈运动。',
+    src: '检查前准备：空腹、憋尿、停药？' },
+
+  { p: 3, q: '看病时为什么建议不涂指甲油？',
+    opts: ['会影响医生签名', '影响面色观察和血氧监测', '会污染检查设备', '会增加候诊时间'],
+    a: '影响面色观察和血氧监测',
+    explain: '不化浓妆、不涂指甲油，是为了不影响面色观察和血氧监测。另外穿宽松易脱衣物，病历、检查单、片子按时间顺序装好，陪护一人即可。',
+    src: '看病穿什么、带什么' },
+
+  { p: 3, q: '向医生描述疼痛，应包含哪四要素？',
+    opts: ['部位、性质、程度（0—10 分）、开始时间', '年龄、职业、身高、体重', '药名、剂量、频次、厂家', '天气、心情、饮食、睡眠'],
+    a: '部位、性质、程度（0—10 分）、开始时间',
+    explain: '哪里痛 + 什么样的痛（胀痛／刺痛／绞痛／烧灼）+ 打几分（0—10）+ 从什么时候开始；还要说清诱因、缓解因素和有无放射。别只说「很难受」。',
+    src: '怎么描述疼痛' },
+
+  { p: 3, q: '药品说明书最该先看哪两项？',
+    opts: ['【用法用量】和【禁忌】', '【性状】和【包装】', '【生产企业】和【批准文号】', '【不良反应】和【贮藏】'],
+    a: '【用法用量】和【禁忌】',
+    explain: '这两项最重要。【注意事项】里「慎用」需权衡利弊，「禁用」是绝对不能；【不良反应】列得长不代表容易发生，是法规要求的全面告知，别把「不良反应多」当成「药不好」。',
+    src: '说明书重点看哪几行' },
+
+  { p: 3, q: '写用药清单，哪三样必须写清？',
+    opts: ['通用名、每次剂量、每天几次', '商品名、价格、购买渠道', '颜色、形状、口味', '厂家、批号、有效期'],
+    a: '通用名、每次剂量、每天几次',
+    explain: '列出所有正在用的药：通用名（不是商品名）、每次剂量、每天几次、吃了多久。中药、中成药、保健品、外用药、眼药水都要写；最省事是把药盒装一袋带给医生。',
+    src: '用药清单怎么写' },
+
+  { p: 3, q: '说过敏史，哪种说法对医生最有用？',
+    opts: ['我是过敏体质', '对什么过敏、出现什么反应、什么时候发生', '我家里没人过敏', '我很少生病'],
+    a: '对什么过敏、出现什么反应、什么时候发生',
+    explain: '「青霉素过敏，打针后全身起疹子、喘不上气」比「我过敏体质」有用得多。还要区分不良反应与过敏：吃某药后拉肚子是副作用，起疹子才是过敏。',
+    src: '过敏史要说清是哪一种' },
+
+  { p: 3, q: '初诊挂号怎么选更合理？',
+    opts: ['直接挂最贵的特需号', '先挂普通门诊，拿到检查结果后再挂专家号', '每次都换不同专家', '只挂急诊'],
+    a: '先挂普通门诊，拿到检查结果后再挂专家号',
+    explain: '初诊先把病史问清、基础检查开齐；拿到结果后再挂专家号，专家能直接看结果下判断。同一疾病连续复诊尽量挂同一位医生，他熟悉完整病程。',
+    src: '初诊和复诊，挂的号不一样' },
+
+  { p: 3, q: '出院时要问清哪三件事？',
+    opts: ['床位费、餐费、停车费', '什么时候复查、药吃多久、出现什么情况要立刻回来', '医生姓名、护士姓名、病房号', '医保比例、发票抬头、报销地点'],
+    a: '什么时候复查、药吃多久、出现什么情况要立刻回来',
+    explain: '出院记录、手术记录要留存，复查时带上；出现发热、伤口红肿渗液、疼痛加重，及时联系主管医生。把复查日期设成手机提醒。',
+    src: '出院后别断了随访' },
+
+  { p: 4, q: '情绪自检建议多久做一次、花多长时间？',
+    opts: ['每天 30 秒', '每周一次、每次 1 小时', '每月一次、每次半天', '只在难受时做'],
+    a: '每天 30 秒',
+    explain: '每天花 30 秒自检：情绪强度打几分（1—10）、发生在什么情境、身体有什么变化、我在想什么。情绪是信号，不是错误；能被命名和记录的情绪，强度通常会下降。',
+    src: '情绪小体检：先给它打个分' },
+
+  { p: 4, q: '躺下多久还没睡着，建议起身做点安静的事？',
+    opts: ['5 分钟', '10 分钟', '20 分钟', '60 分钟'],
+    a: '20 分钟',
+    explain: '躺下 20 分钟还没睡着，就到昏暗灯光下做点安静的事，有困意再回床，不要反复看时间、反复自责。另可设傍晚固定 15 分钟「担心时间」把念头写进清单。',
+    src: '睡前脑子停不下来怎么办' },
+
+  { p: 4, q: '情绪低落持续多久、且影响睡眠学习工作，建议寻求专业帮助？',
+    opts: ['两天以上', '两周以上', '两个月以上', '半年以上'],
+    a: '两周以上',
+    explain: '持续两周以上情绪低落、兴趣减退、疲乏无力难以自行缓解，或焦虑惊恐已影响上课上班，建议到正规医院精神心理科就诊。全国统一心理援助热线 12356。',
+    src: '什么时候该找专业帮助' },
+
+  { p: 4, q: '紧张时调整呼吸，正确做法是？',
+    opts: ['吸气 4 秒、呼气 6—8 秒，呼气比吸气长', '尽量深吸气、快速呼出', '屏气 30 秒', '用力大口喘气'],
+    a: '吸气 4 秒、呼气 6—8 秒，呼气比吸气长',
+    explain: '呼气比吸气长能更快激活副交感神经；不用刻意深呼吸，重点是「呼气慢而长」，做 6 轮。若出现头晕，说明呼吸过深过快，恢复自然呼吸即可。',
+    src: '紧张时，先把呼气拉长' },
+
+  { p: 4, q: '需要诊断、开药，应该看哪一个？',
+    opts: ['心理咨询', '精神科门诊', '学校社团', '健身教练'],
+    a: '精神科门诊',
+    explain: '精神科门诊由精神科医师出诊，能诊断、能开药、可做物理治疗；心理咨询提供谈话治疗，不能开药、不能下诊断。明显影响睡眠饮食工作、可能需要用药时先看精神科。',
+    src: '心理咨询和精神科门诊怎么选' },
+
+  { p: 4, q: '出现轻生念头时，第一步应该？',
+    opts: ['先保证安全、让身边人陪着，立刻求助', '先自己静一静，别告诉别人', '先上网查资料', '先睡一觉再看'],
+    a: '先保证安全、让身边人陪着，立刻求助',
+    explain: '让身边人陪着，把药物、刀具、绳索等移开；拨打 12356 或到就近医院精神科／急诊。把「我现在很危险」说出来，是最有效的第一步。',
+    src: '有轻生念头时该做什么' },
 
 ];;
 
@@ -27804,6 +28043,7 @@ function chooseQuiz(el){
     if(!ok) save();
   }
   markDay(1);
+  if(typeof campOnAnswer==='function') campOnAnswer(ok);
   if(ok) qRemoveWrong(cur); else qAddWrong(cur);
   if(gain){ addPts(gain); }
   Q.rightCount+=(ok?1:0);
@@ -27844,6 +28084,7 @@ function nextQuiz(){
     state.quiz.bestCombo = Math.max(state.quiz.bestCombo||0, Q.maxCombo);
     markDay(2);                       // 完成一局记一次学习事件（热力图）
     save();
+    Q.campMsg=(typeof campOnFinish==='function')?campOnFinish():'';
     Q.done=true; render(); return;
   }
   Q.i=ni; Q.picked=''; Q.ok=false; Q.srcId=''; Q.timeout=false; render(); startTimer(); setTimeout(scrollToQuiz,0);
@@ -27992,31 +28233,22 @@ function renderFun(){
       +'</div>';
 
   if(uiMode==='quiz'){
-    /* 打卡 */
-    html+='<div class="card"><div class="ck-head"><span class="title">14天健康体验营</span>'
-        + '<span class="ck-prog">'+(td>=14?'已集满 14 天':'已打卡 '+Math.min(td,14)+' / 14 天')+'</span></div>'
-        +'<div class="subtitle">任意一天可打卡，集满 14 天即毕业</div>'
-        +'<div class="dots">'+dots.join('')+'</div>'
-        +'<div class="btn '+(checkedToday?'done':'')+'" onclick="checkIn()">'+(checkedToday?'今日已打卡 ✓':'今日打卡 +10 积分')+'</div></div>';
+    /* 打卡 → 课程化：完成今日任务才达标，达标时自动点亮日历 */
+    html+=campProgressHtml();
 
     /* 每日挑战
        v6.52：按钮降为描边次级。原来打卡、每日挑战、闯关入口三张卡片各挂一个
        全宽紫色渐变按钮，同色同权重铺满一屏，用户扫下来不知道先点哪个。
        打卡是每天一次的一键动作（也是积分的主要来源），留作主按钮；
        每日挑战是「进入一个流程」，改用次级样式，页面只保留一个高饱和行动点。 */
-    var today=dstr(), dailyDone=(state.daily.date===today);
-    html+='<div class="card daily"><div class="d-head"><span class="title">每日挑战</span><span class="d-date">'+today+'</span></div>'
-        +'<div class="subtitle">每天 5 道固定题目 · 完成 +20 积分，全对再 +15</div>';
-    if(dailyDone){
-      html+='<div class="d-done"><span class="d-ok">今日已完成 ✓</span><span class="d-meta">得分 '+state.daily.score+' · 连续 '+(state.daily.streak||1)+' 天</span></div>';
-    } else {
-      html+='<div class="btn-soft" onclick="startDaily()">开始今日挑战</div>';
-    }
-    html+='</div>';
+    /* 每日挑战入口已并入上方「今日任务」，此处保留自由练习与错题重练说明 */
+    html+='<div class="card daily"><div class="d-head"><span class="title">自由练习</span><span class="d-date">'+dstr()+'</span></div>'
+        +'<div class="subtitle">下方「健康知识闯关」可随时练手，答对的题同样计入银证书进度</div>'
+        +'<div class="subtitle">当前累计答对 '+(state.camp.correctTotal||0)+' / '+CAMP_SILVER+' 题</div></div>';
 
     /* 闯关 */
     html+='<div class="card"><div class="q-title-row"><div><div class="title">健康知识闯关</div>'
-        +'<div class="subtitle">题库来自科普库 '+BANK.length+' 道精选知识 · 连对 3 题起加倍</div></div>'
+        +'<div class="subtitle">题库来自科普库 '+BANK.length+' 道精选知识 · 连对 3 题起加倍 · 答对计入毕业进度</div></div>'
         +'<div class="q-clock-btn '+(TIME_ON?'on':'')+'" onclick="toggleTimer()" title="限时答题开关">'+(TIME_ON?'⏱ 限时 15s':'⏱ 不限时')+'</div></div>';
 
     if(Q.stage==='pick'){
@@ -28045,6 +28277,7 @@ function renderFun(){
     } else if(!Q.done){
       var cur=Q.round[Q.i];
       var pn=(Q.planet>=0)?QUIZ_PLANETS[Q.planet]:(Q.planet===-2?'错题重练':(Q.planet===-3?'每日挑战':'全部板块'));
+      if(Q.isCamp) pn='今日任务 · '+(Q.campTopic||'');
       html+='<div class="q-bar"><span class="q-planet">'+esc(pn)+(Q.lvP>=0?' · 第 '+(Q.lvI+1)+' 关':'')+'</span>'
           +'<span class="q-prog">'+(Q.i+1)+'/'+Q.round.length+'</span>'
           +(Q.combo>=2?'<span class="q-combo">连对 '+Q.combo+' 🔥</span>':'')
@@ -28072,6 +28305,7 @@ function renderFun(){
       html+='<div class="result">'+(Q.newBest?'<div class="q-newbest">🎉 新纪录！</div>':'')
           +'<div class="q-rank">'+Q.rank+'</div><div class="q-score">'+Q.score+'<span class="q-unit"> 分</span></div>'
           +'<div class="q-sub">答对 '+Q.rightCount+'/'+Q.round.length+' · 正确率 '+Q.rate+'% · 最高连对 '+Q.maxCombo+'</div>'
+          +(Q.campMsg?'<div class="d-bonus">'+esc(Q.campMsg)+'</div>':'')
           +((Q.isDaily&&Q.dailyBonus>0)?'<div class="d-bonus">每日奖励 +'+Q.dailyBonus+' 分 · 连续 '+(state.daily.streak||1)+' 天 🔥</div>':'')
           +(Q.newBadge?'<div class="q-badge">🎖 解锁新徽章：'+esc(Q.newBadge)+'</div>':'')
           +((state.quiz.wrong||[]).length?'<div class="q-src" onclick="startWrongQuiz()">📕 错题重练（'+state.quiz.wrong.length+' 题）›</div>':'')
@@ -28315,6 +28549,201 @@ function renderFun(){
   html+='</div>';
   return html;
 }
+/* ===== CAMP_V1 14 天课程化体验营 =====
+   规则：每天一个主题（读 1 篇 + 做 5 题），答对 >=3 题即达标；
+   达标时调用既有 checkIn() 写入 state.checkins，日历/积分/云端档案码自动兼容。
+   毕业双轨：金证书=连续 14 天达标；银证书=累计答对 60 题（断档也能完成）。
+   断网/异常不影响：全部数据落 localStorage，降级为本地知识库同样可答题。 */
+var CAMP_DAYS=14, CAMP_QS=5, CAMP_PASS=3, CAMP_SILVER=60;
+var CAMP_PLAN=[
+  {p:0,topic:'气道与呼吸',   read:'异物卡喉：海姆立克急救法'},
+  {p:0,topic:'心肺与循环',   read:'成人心肺复苏（CPR）'},
+  {p:1,topic:'用眼健康',     read:'干眼：别乱滴眼药水'},
+  {p:1,topic:'膳食与肠道',   read:'膳食纤维：肠道的口粮'},
+  {p:2,topic:'识破伪科学',   read:'「器官排毒时间表」是真的吗？'},
+  {p:2,topic:'用药常识',     read:'「消炎药」就是抗生素？'},
+  {p:3,topic:'就诊准备',     read:'检查前准备：空腹、憋尿、停药？'},
+  {p:3,topic:'医患沟通',     read:'怎么描述疼痛'},
+  {p:4,topic:'情绪识别',     read:'情绪小体检：先给它打个分'},
+  {p:4,topic:'放松技巧',     read:'紧张时，先把呼气拉长'},
+  {p:0,topic:'外伤与出血',   read:'大出血：压迫为主，止血带为辅'},
+  {p:1,topic:'睡眠与作息',   read:'打鼾：别当成睡得香'},
+  {p:2,topic:'急救误区',     read:'烫伤后能用冰块敷吗'},
+  {p:5,topic:'院史与结业',   read:'薪火相传：今天的我们'}
+];
+function campDayNo(){
+  /* 按累计达标天数推进课程：断档可续，不强制日历连续 */
+  return Math.min(Object.keys(state.camp.days||{}).length+1, CAMP_DAYS);
+}
+function campPlan(){ return CAMP_PLAN[Math.max(0,campDayNo()-1)]; }
+function campTodayRec(){ return (state.camp.days||{})[dstr()]||null; }
+function campDoneToday(){ var r=campTodayRec(); return !!(r&&r.pass); }
+function campGradLevel(){
+  if(state.camp.grad==='gold') return 'gold';
+  if(state.camp.grad==='silver') return 'silver';
+  return '';
+}
+function campCheckGrad(){
+  /* 金：连续 14 天达标（streakOf 从今天/昨天回溯 checkins）
+     银：累计答对 60 题（含自由闯关，鼓励多学） */
+  if(state.camp.grad) return;
+  var streak=streakOf();
+  if(streak>=CAMP_DAYS){
+    state.camp.grad='gold'; state.camp.gradDate=dstr();
+    state.camp.certNo='XH-G'+String(Date.now()).slice(-8);
+    save(); setTimeout(openGradCert,450); return;
+  }
+  if((state.camp.correctTotal||0)>=CAMP_SILVER){
+    state.camp.grad='silver'; state.camp.gradDate=dstr();
+    state.camp.certNo='XH-S'+String(Date.now()).slice(-8);
+    save(); setTimeout(openGradCert,450);
+  }
+}
+function campOpenRead(){
+  var pl=campPlan();
+  var id=quizSrcId(QUIZ_PLANETS[pl.p], pl.read);
+  if(id) openDetail('article',id); else alert('今日阅读篇目暂不可用，可直接在科普库检索：'+pl.read);
+}
+function startCampTask(){
+  if(campDoneToday()){
+    alert('今日任务已完成 ✓ 明天继续第 '+Math.min(campDayNo()+1,CAMP_DAYS)+' 天'); return;
+  }
+  var pl=campPlan();
+  /* 优先混入昨日错题（同板块），再按当天板块补足，保证「次日复习」 */
+  var wrong=qWrongList().filter(function(x){return x.p===pl.p;});
+  var round=wrong.slice(0,2);
+  var fresh=quizDraw(pl.p, CAMP_QS+3).filter(function(x){return round.indexOf(x)<0;});
+  round=round.concat(fresh).slice(0,CAMP_QS);
+  if(round.length<CAMP_QS){
+    var extra=quizDraw(-1,CAMP_QS-round.length).filter(function(x){return round.indexOf(x)<0;});
+    round=round.concat(extra).slice(0,CAMP_QS);
+  }
+  Q={stage:'play',planet:pl.p,round:round,i:0,picked:'',ok:false,score:0,combo:0,maxCombo:0,
+     rightCount:0,done:false,rate:0,rank:'',srcId:'',newBest:false,isDaily:false,dailyBonus:0,
+     lvP:-1,lvI:0,timeout:false,isCamp:true,campTopic:pl.topic};
+  clearTimer(); render(); startTimer(); setTimeout(scrollToQuiz,0);
+}
+function campOnAnswer(ok){
+  /* 每答对一题累计（含自由闯关），供银证书判定 */
+  if(ok) state.camp.correctTotal=(state.camp.correctTotal||0)+1;
+  save();
+}
+function campOnFinish(){
+  if(!Q.isCamp) return '';
+  var right=Q.rightCount||0, pass=right>=CAMP_PASS, today=dstr(), msg='';
+  var dayNo=campDayNo();          /* 先取「今天是第几天」，避免写完记录后序号 +1 */
+  var rec=state.camp.days[today]||{right:0,total:Q.round.length,pass:false,tries:0};
+  rec.tries=(rec.tries||0)+1;
+  rec.right=Math.max(rec.right||0,right);
+  rec.total=Q.round.length;
+  if(pass && !rec.pass){
+    rec.pass=true;
+    state.camp.days[today]=rec; save();
+    /* 复用既有打卡：日历、积分、云端档案码全部自动兼容 */
+    if(!state.checkins[today]) checkIn(); else { checkedToday=true; render(); }
+    msg='今日任务达标 ✓ 第 '+dayNo+' 天已点亮';
+  } else if(pass){
+    msg='今日任务已达标 ✓ 继续保持';
+  } else {
+    msg='还差 '+(CAMP_PASS-right)+' 题达标，明天可再来（错题已进错题本）';
+  }
+  state.camp.days[today]=rec; save();
+  campCheckGrad();
+  return msg;
+}
+function campProgressHtml(){
+  var no=campDayNo(), pl=campPlan(), rec=campTodayRec(), done=campDoneToday();
+  var g=campGradLevel();
+  var h='<div class="card camp"><div class="ck-head"><span class="title">14天健康体验营 · 第 '+no+' 天</span>'
+      +'<span class="ck-prog">'+(g?'已毕业 '+(g==='gold'?'金证书':'银证书'):'已达标 '+Math.min(Object.keys(state.camp.days||{}).length,14)+' / 14 天')+'</span></div>'
+      +'<div class="subtitle">今日主题：'+esc(pl.topic)+' · 读 1 篇 + 做 '+CAMP_QS+' 题，答对 '+CAMP_PASS+' 题即达标</div>'
+      +'<div class="camp-link" onclick="campOpenRead()">📖 今日阅读：'+esc(pl.read)+' ›</div>';
+  if(done){
+    h+='<div class="camp-ok">今日已达标 ✓ 答对 '+(rec.right||0)+'/'+CAMP_QS+' · 日历已点亮</div>';
+  }else if(rec && rec.tries){
+    h+='<div class="camp-retry">昨日未达标，答错的题已进错题本，今天会优先复习</div>';
+  }
+  h+='<div class="dots">';
+  var dn=Object.keys(state.camp.days||{}).length;
+  for(var i=0;i<14;i++){
+    var cl=i<dn?'on':(i===dn?'today':'');
+    h+='<span class="dot '+cl+'">'+(i===dn?(i+1):'')+'</span>';
+  }
+  h+='</div>';
+  if(!done) h+='<div class="btn" onclick="startCampTask()">完成今日任务（'+CAMP_QS+' 题）</div>';
+  else h+='<div class="btn done">今日已完成 ✓</div>';
+  if(g) h+='<div class="btn-soft" onclick="openGradCert()">🎓 查看毕业证书</div>';
+  h+='<div class="subtitle" style="margin-top:10px">金证书：连续 14 天达标 · 银证书：累计答对 '+CAMP_SILVER+' 题（当前 '+(state.camp.correctTotal||0)+' 题）</div>';
+  return h+'</div>';
+}
+/* 毕业证书：复用海报的星空 canvas 风格，独立绘制 */
+function gradCertData(){
+  var g=campGradLevel()||'silver';
+  return {level:g, date:state.camp.gradDate||dstr(), no:state.camp.certNo||'XH-00000000',
+    days:Object.keys(state.camp.days||{}).length, correct:state.camp.correctTotal||0,
+    points:state.points||0, streak:streakOf()};
+}
+function drawGradCanvas(d){
+  var cv=document.createElement('canvas'), W=640,H=900; cv.width=W; cv.height=H;
+  var ctx=cv.getContext('2d');
+  ctx.fillStyle='#0B0E26'; ctx.fillRect(0,0,W,H);
+  var seed=20261107;
+  function rnd(){ seed=(seed*9301+49297)%233280; return seed/233280; }
+  for(var i=0;i<110;i++){
+    ctx.beginPath(); ctx.arc(rnd()*W,rnd()*H,rnd()*1.5+0.3,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,'+(rnd()*0.55+0.2).toFixed(2)+')'; ctx.fill();
+  }
+  function rr(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+  var gold=(d.level==='gold');
+  var main=gold?'#FFD27A':'#B9C8F5';
+  ctx.textAlign='center';
+  ctx.strokeStyle=gold?'rgba(255,210,122,.55)':'rgba(185,200,245,.45)'; ctx.lineWidth=2;
+  rr(40,40,W-80,H-80,18); ctx.stroke();
+  ctx.fillStyle='#FFD27A'; ctx.font='bold 22px sans-serif';
+  ctx.fillText('薪 火 医 语',W/2,110);
+  ctx.fillStyle='rgba(232,236,248,.6)'; ctx.font='13px sans-serif';
+  ctx.fillText('14 天健康体验营',W/2,140);
+  ctx.fillStyle=main; ctx.font='bold 40px sans-serif';
+  ctx.fillText(gold?'全勤毕业证书':'结业证书',W/2,225);
+  ctx.fillStyle='rgba(194,205,236,.85)'; ctx.font='14px sans-serif';
+  ctx.fillText(gold?'连续 14 天完成每日学习任务':'累计答对 60 题 · 完成科普学习',W/2,258);
+  ctx.strokeStyle='rgba(160,175,255,.2)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(100,292); ctx.lineTo(W-100,292); ctx.stroke();
+  ctx.fillStyle='#F2F5FF'; ctx.font='bold 26px sans-serif';
+  ctx.fillText('兹证明学习者已完成本课程',W/2,350);
+  ctx.fillStyle='rgba(194,205,236,.8)'; ctx.font='14px sans-serif';
+  ctx.fillText('涵盖急救守护、保健小知识、健康辟谣、就医小技巧、',W/2,392);
+  ctx.fillText('心灵舒缓与抗战迁陕院史六大板块的科普学习',W/2,418);
+  var cols=[{k:'达标天数',v:d.days+' 天'},{k:'累计答对',v:d.correct+' 题'},{k:'连续达标',v:d.streak+' 天'}];
+  cols.forEach(function(c,i){
+    var cw=W/3, cx=cw*i+cw/2;
+    ctx.fillStyle='rgba(255,255,255,.06)'; rr(cw*i+24,466,cw-48,92,12); ctx.fill();
+    ctx.fillStyle=main; ctx.font='bold 24px sans-serif'; ctx.fillText(c.v,cx,510);
+    ctx.fillStyle='rgba(168,178,209,.9)'; ctx.font='12px sans-serif'; ctx.fillText(c.k,cx,536);
+  });
+  ctx.fillStyle='rgba(232,236,248,.92)'; ctx.font='15px sans-serif';
+  ctx.fillText('愿这份知识，在需要的时候能帮上忙。',W/2,624);
+  ctx.fillStyle='rgba(168,178,209,.75)'; ctx.font='12px sans-serif';
+  ctx.fillText('证书编号 '+d.no+' · 颁发日期 '+d.date,W/2,690);
+  ctx.fillStyle='rgba(124,136,172,.75)'; ctx.font='11px sans-serif';
+  ctx.fillText('本证书仅记录科普学习过程，不作为医疗资质或诊断依据',W/2,740);
+  ctx.fillText('薪火医语 · 健康科普体验营',W/2,772);
+  return cv.toDataURL('image/png');
+}
+function openGradCert(){
+  if(!campGradLevel()){ alert('还未毕业：连续 14 天达标，或累计答对 '+CAMP_SILVER+' 题即可领取证书'); return; }
+  var url=drawGradCanvas(gradCertData());
+  var old=document.getElementById('posterMask'); if(old) old.remove();
+  var div=document.createElement('div'); div.id='posterMask'; div.className='poster-mask';
+  div.innerHTML='<div class="poster-box"><img src="'+url+'" alt="毕业证书">'
+    +'<div class="poster-tip">长按图片保存，或点下方按钮下载</div>'
+    +'<div class="poster-btns"><span class="btn-ghost" onclick="closePoster()">关闭</span>'
+    +'<a class="btn" href="'+url+'" download="薪火医语-毕业证书.png">下载证书</a></div></div>';
+  document.body.appendChild(div);
+  div.addEventListener('click',function(e){ if(e.target===div) closePoster(); });
+}
+
 function checkIn(){
   var today = dstr();
   if(state.checkins[today]){ checkedToday = true; return; }   /* 同一天只能打一次；日期集合天然幂等 */
@@ -31001,10 +31430,11 @@ else setTimeout(ckBoot, 0);
       k: 'fun', ic: '🎯', title: '互动 · 边玩边记',
       items: [
         ['四种玩法', '闯关答题、情景演练、抢答对战、院史闯关，节奏和难度各不相同。'],
-        ['每天来打个卡', '「闯关答题」页顶部是 21 天健康打卡，每天 +10 积分；连续天数会一天天累加。'],
-        ['错了也有讲解', '每题都带解析与出处；情景演练会把整段医患对话演给你看。']
+        ['14 天毕业', '「闯关答题」页顶部是 14 天健康体验营：每天读 1 篇科普、做 5 题，答对 3 题即达标并自动点亮日历。'],
+        ['金 / 银双证书', '连续 14 天达标得金证书；累计答对 60 题得银证书，断档也能补，达标后可下载毕业证书。'],
+        ['错了也有讲解', '每题都带解析与出处，答错的题自动进错题本、次日优先复习；情景演练会把整段医患对话演给你看。']
       ],
-      tip: '想要「连续天」好看，就从今天这一次打卡开始。'
+      tip: '从今天的「完成今日任务」开始，14 天就能领到毕业证书。'
     },
     {
       k: 'history', ic: '🏛️', title: '院史 · 抗战迁陕',
