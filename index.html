@@ -1601,7 +1601,7 @@
     <span id="navTitle">薪火医语</span>
     <!-- v6.48：版本号挪进顶栏右侧空白区。原来挂在 .phone 上 bottom:6px，
          正好压在底部标签栏的「我的」上（真机截图实测）。 -->
-    <span class="ver" title="构建标识">v6.68</span>
+    <span class="ver" title="构建标识">v6.69</span>
   </div>
 
   <div class="screen" id="screen"></div>
@@ -26902,7 +26902,7 @@ function timeoutWrong(){
 }
 
 /* 版本号：显示在「我的」页底部，用来确认手机上打开的是不是最新版（缓存排查用） */
-var APP_VER='v6.68';
+var APP_VER='v6.69';
 /* 右下角构建标识跟着版本号走：以前写死在 HTML 里，升版会忘了改，截图对不上号 */
 (function(){
   function sync(){ var el=document.querySelector('.ver'); if(el) el.textContent=APP_VER; }
@@ -30441,12 +30441,14 @@ function renderFun(){
   html+='</div>';
   return html;
 }
-/* ===== CAMP_V1 14 天课程化体验营 =====
-   规则：每天一个主题（读 1 篇 + 做 5 题），答对 >=3 题即达标；
-   达标时调用既有 checkIn() 写入 state.checkins，日历/积分/云端档案码自动兼容。
-   毕业双轨：金证书=连续 14 天达标；银证书=累计答对 60 题（断档也能完成）。
+/* ===== CAMP_V1 14 天课程化体验营（v6.69 全库通刷）=====
+   规则：490 道题按科普库顺序切成 14 段，每天固定 35 道新题，14 天不重不漏刷完全库；
+   每天读 1 篇 + 做完当天 35 题即达标（不再按答对数卡人），达标时调用既有 checkIn()
+   写入 state.checkins，日历 / 积分自动兼容；答错的题仍进错题本，可在「错题重练」随时复习。
+   CAMP_PASS=0 表示不设答对门槛（保留字段只为兼容旧数据结构）。
+   毕业双轨：金证书=14 天全勤做满 490 题（优先，可覆盖银证书）；银证书=累计答对 350 题（断档也能补）。
    断网/异常不影响：全部数据落 localStorage，降级为本地知识库同样可答题。 */
-var CAMP_DAYS=14, CAMP_QS=5, CAMP_PASS=3, CAMP_SILVER=60;
+var CAMP_DAYS=14, CAMP_QS=35, CAMP_PASS=0, CAMP_SILVER=350;
 var CAMP_PLAN=[
   {p:0,topic:'气道与呼吸',   read:'异物卡喉：海姆立克急救法'},
   {p:0,topic:'心肺与循环',   read:'成人心肺复苏（CPR）'},
@@ -30463,6 +30465,12 @@ var CAMP_PLAN=[
   {p:2,topic:'急救误区',     read:'烫伤后能用冰块敷吗'},
   {p:5,topic:'院史与结业',   read:'薪火相传：今天的我们'}
 ];
+/* v6.69 全库通刷：BANK 按科普库顺序切成 14 段，每天 35 题，不重不漏。
+   490 = 14 × 35，题库扩充时 check_three_versions.py 会校验并提醒重新分配。 */
+function campSlice(n){
+  n=Math.max(1,Math.min(n||1,CAMP_DAYS));
+  return BANK.slice((n-1)*CAMP_QS, n*CAMP_QS);
+}
 function campDayNo(){
   /* 按累计达标天数推进课程：断档可续，不强制日历连续 */
   return Math.min(Object.keys(state.camp.days||{}).length+1, CAMP_DAYS);
@@ -30476,15 +30484,18 @@ function campGradLevel(){
   return '';
 }
 function campCheckGrad(){
-  /* 金：连续 14 天达标（streakOf 从今天/昨天回溯 checkins）
-     银：累计答对 60 题（含自由闯关，鼓励多学） */
-  if(state.camp.grad) return;
-  var streak=streakOf();
-  if(streak>=CAMP_DAYS){
-    state.camp.grad='gold'; state.camp.gradDate=dstr();
-    state.camp.certNo='XH-G'+String(Date.now()).slice(-8);
-    save(); setTimeout(openGradCert,450); return;
+  /* 金：14 天全勤（每天做完当天 35 题）＝累计做满 490 题，优先判定且可覆盖银证书，
+     避免先拿到银证书后 14 天全勤反而领不到金证书。
+     银：累计答对 350 题（含自由闯关，断档也能补）。 */
+  if(streakOf()>=CAMP_DAYS){
+    if(state.camp.grad!=='gold'){
+      state.camp.grad='gold'; state.camp.gradDate=dstr();
+      state.camp.certNo='XH-G'+String(Date.now()).slice(-8);
+      save(); setTimeout(openGradCert,450);
+    }
+    return;
   }
+  if(state.camp.grad) return;
   if((state.camp.correctTotal||0)>=CAMP_SILVER){
     state.camp.grad='silver'; state.camp.gradDate=dstr();
     state.camp.certNo='XH-S'+String(Date.now()).slice(-8);
@@ -30501,16 +30512,11 @@ function startCampTask(){
     alert('今日任务已完成 ✓ 明天继续第 '+Math.min(campDayNo()+1,CAMP_DAYS)+' 天'); return;
   }
   var pl=campPlan();
-  /* 优先混入昨日错题（同板块），再按当天板块补足，保证「次日复习」 */
-  var wrong=qWrongList().filter(function(x){return x.p===pl.p;});
-  var round=wrong.slice(0,2);
-  var fresh=quizDraw(pl.p, CAMP_QS+3).filter(function(x){return round.indexOf(x)<0;});
-  round=round.concat(fresh).slice(0,CAMP_QS);
-  if(round.length<CAMP_QS){
-    var extra=quizDraw(-1,CAMP_QS-round.length).filter(function(x){return round.indexOf(x)<0;});
-    round=round.concat(extra).slice(0,CAMP_QS);
-  }
-  Q={stage:'play',planet:pl.p,round:round,i:0,picked:'',ok:false,score:0,combo:0,maxCombo:0,
+  /* v6.69 全库通刷：当天题目固定取第 n 段 35 题，不随机、不混入错题，
+     保证 14 天把 490 道题不重不漏做一遍；错题仍进错题本，用「错题重练」单独复习。
+     planet 设 -1，让每道题按自己的板块跳「相关原文」（一段里可能跨板块）。 */
+  var round=campSlice(campDayNo());
+  Q={stage:'play',planet:-1,round:round,i:0,picked:'',ok:false,score:0,combo:0,maxCombo:0,
      rightCount:0,done:false,rate:0,rank:'',srcId:'',newBest:false,isDaily:false,dailyBonus:0,
      lvP:-1,lvI:0,timeout:false,isCamp:true,campTopic:pl.topic};
   clearTimer(); render(); startTimer(); setTimeout(scrollToQuiz,0);
@@ -30522,22 +30528,22 @@ function campOnAnswer(ok){
 }
 function campOnFinish(){
   if(!Q.isCamp) return '';
-  var right=Q.rightCount||0, pass=right>=CAMP_PASS, today=dstr(), msg='';
+  var right=Q.rightCount||0, total=(Q.round||[]).length, pass=(total>=CAMP_QS), today=dstr(), msg='';
   var dayNo=campDayNo();          /* 先取「今天是第几天」，避免写完记录后序号 +1 */
-  var rec=state.camp.days[today]||{right:0,total:Q.round.length,pass:false,tries:0};
+  var rec=state.camp.days[today]||{right:0,total:total,pass:false,tries:0};
   rec.tries=(rec.tries||0)+1;
   rec.right=Math.max(rec.right||0,right);
-  rec.total=Q.round.length;
+  rec.total=total;
   if(pass && !rec.pass){
     rec.pass=true;
     state.camp.days[today]=rec; save();
-    /* 复用既有打卡：日历、积分、云端档案码全部自动兼容 */
+    /* 复用既有打卡：日历、积分自动兼容 */
     if(!state.checkins[today]) checkIn(); else { checkedToday=true; render(); }
-    msg='今日任务达标 ✓ 第 '+dayNo+' 天已点亮';
+    msg='今日任务达标 ✓ 第 '+dayNo+' 天 '+CAMP_QS+' 题已做完，日历已点亮';
   } else if(pass){
     msg='今日任务已达标 ✓ 继续保持';
   } else {
-    msg='还差 '+(CAMP_PASS-right)+' 题达标，明天可再来（错题已进错题本）';
+    msg='今日 '+CAMP_QS+' 题没做完，明天继续这一段（错题已进错题本）';
   }
   state.camp.days[today]=rec; save();
   campCheckGrad();
@@ -30546,14 +30552,18 @@ function campOnFinish(){
 function campProgressHtml(){
   var no=campDayNo(), pl=campPlan(), rec=campTodayRec(), done=campDoneToday();
   var g=campGradLevel();
+  var doneDays=Math.min(Object.keys(state.camp.days||{}).length,CAMP_DAYS);
+  var covered=Math.min(doneDays*CAMP_QS,BANK.length);
   var h='<div class="card camp"><div class="ck-head"><span class="title">14天健康体验营 · 第 '+no+' 天</span>'
-      +'<span class="ck-prog">'+(g?'已毕业 '+(g==='gold'?'金证书':'银证书'):'已达标 '+Math.min(Object.keys(state.camp.days||{}).length,14)+' / 14 天')+'</span></div>'
-      +'<div class="subtitle">今日主题：'+esc(pl.topic)+' · 读 1 篇 + 做 '+CAMP_QS+' 题，答对 '+CAMP_PASS+' 题即达标</div>'
+      +'<span class="ck-prog">'+(g?'已毕业 '+(g==='gold'?'金证书':'银证书'):'已达标 '+doneDays+' / '+CAMP_DAYS+' 天')+'</span></div>'
+      +'<div class="subtitle">今日主题：'+esc(pl.topic)+' · 读 1 篇 + 做今天的 '+CAMP_QS+' 道新题，做完即达标</div>'
+      +'<div class="subtitle">全库进度：'+covered+' / '+BANK.length+' 题（14 天不重不漏刷完）</div>'
+      +'<div class="subtitle">每天 35 题约 10 分钟，建议一次做完；中途退出下次仍从这一段开始</div>'
       +'<div class="camp-link" onclick="campOpenRead()">📖 今日阅读：'+esc(pl.read)+' ›</div>';
   if(done){
-    h+='<div class="camp-ok">今日已达标 ✓ 答对 '+(rec.right||0)+'/'+CAMP_QS+' · 日历已点亮</div>';
+    h+='<div class="camp-ok">今日已达标 ✓ 做完 '+CAMP_QS+' 题 · 答对 '+(rec.right||0)+' 题 · 日历已点亮</div>';
   }else if(rec && rec.tries){
-    h+='<div class="camp-retry">昨日未达标，答错的题已进错题本，今天会优先复习</div>';
+    h+='<div class="camp-retry">上次没做完，今天继续这一段 '+CAMP_QS+' 题；答错的题已进错题本</div>';
   }
   h+='<div class="dots">';
   var dn=Object.keys(state.camp.days||{}).length;
@@ -30565,7 +30575,7 @@ function campProgressHtml(){
   if(!done) h+='<div class="btn" onclick="startCampTask()">完成今日任务（'+CAMP_QS+' 题）</div>';
   else h+='<div class="btn done">今日已完成 ✓</div>';
   if(g) h+='<div class="btn-soft" onclick="openGradCert()">🎓 查看毕业证书</div>';
-  h+='<div class="subtitle" style="margin-top:10px">金证书：连续 14 天达标 · 银证书：累计答对 '+CAMP_SILVER+' 题（当前 '+(state.camp.correctTotal||0)+' 题）</div>';
+  h+='<div class="subtitle" style="margin-top:10px">金证书：14 天全勤做满 '+BANK.length+' 题 · 银证书：累计答对 '+CAMP_SILVER+' 题（当前 '+(state.camp.correctTotal||0)+' 题）</div>';
   return h+'</div>';
 }
 /* 毕业证书：复用海报的星空 canvas 风格，独立绘制 */
@@ -30599,7 +30609,7 @@ function drawGradCanvas(d){
   ctx.fillStyle=main; ctx.font='bold 40px sans-serif';
   ctx.fillText(gold?'全勤毕业证书':'结业证书',W/2,225);
   ctx.fillStyle='rgba(194,205,236,.85)'; ctx.font='14px sans-serif';
-  ctx.fillText(gold?'连续 14 天完成每日学习任务':'累计答对 60 题 · 完成科普学习',W/2,258);
+  ctx.fillText(gold?'14 天全勤 · 做满 '+BANK.length+' 题':'累计答对 '+CAMP_SILVER+' 题 · 完成科普学习',W/2,258);
   ctx.strokeStyle='rgba(160,175,255,.2)'; ctx.lineWidth=1;
   ctx.beginPath(); ctx.moveTo(100,292); ctx.lineTo(W-100,292); ctx.stroke();
   ctx.fillStyle='#F2F5FF'; ctx.font='bold 26px sans-serif';
@@ -30624,7 +30634,7 @@ function drawGradCanvas(d){
   return cv.toDataURL('image/png');
 }
 function openGradCert(){
-  if(!campGradLevel()){ alert('还未毕业：连续 14 天达标，或累计答对 '+CAMP_SILVER+' 题即可领取证书'); return; }
+  if(!campGradLevel()){ alert('还未毕业：14 天全勤做满 '+BANK.length+' 题，或累计答对 '+CAMP_SILVER+' 题即可领取证书'); return; }
   var url=drawGradCanvas(gradCertData());
   var old=document.getElementById('posterMask'); if(old) old.remove();
   var div=document.createElement('div'); div.id='posterMask'; div.className='poster-mask';
@@ -32545,7 +32555,7 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 else setTimeout(ckBoot, 0);
 </script>
 <script>
-/* ===== 新手引导（v6.67 按最新功能重写，v6.68 删工具箱）=====
+/* ===== 新手引导（v6.67 按最新功能重写，v6.68 删工具箱，v6.69 改全库通刷）=====
    开场给两个选项，对应两类人：
    · 新手  → 6 步，一个模块一步，讲清「这个模块能干什么、怎么点」；
    · 老用户 → 直接落到「我的」，打开备份码恢复框，粘贴一段文字就接回记录。
@@ -32553,6 +32563,7 @@ else setTimeout(ckBoot, 0);
    打卡改为本机模式 + 备份码迁移（不再有档案号 / 云端同步 / 战绩海报 / 床旁教学卡）。
    v6.68：「我的」页工具箱与家庭急救卡整块下线，第 5 步不再介绍长图保存 / 转发；
           第 6 步备份码仍是唯一的记录迁移方式。
+   v6.69：14 天体验营改为全库通刷（每天 35 题、14 天做满 490 题），第 3 步同步改写。
    只在首次自动弹（localStorage + cookie + sessionStorage 三重兜底）；
    之后任何时候都能从「我的 → 设置与隐私 → 新手引导」重看，也能在那里关掉自动弹出。
    引导打开期间把 3D 星图暂停（G.active=false），省电也省帧——它被盖住了，没必要继续画。 */
@@ -32592,11 +32603,11 @@ else setTimeout(ckBoot, 0);
       k: 'fun', ic: '🎯', title: '互动 · 边玩边记',
       items: [
         ['四种玩法', '闯关答题、情景演练、抢答对战、院史闯关，节奏和难度各不相同。'],
-        ['14 天毕业', '「闯关答题」页顶部是 14 天健康体验营：每天 5 题、答对 3 题就达标，日历自动点亮；490 道题覆盖全部 486 篇科普文章。'],
-        ['金 / 银双证书', '连续 14 天达标得金证书；累计答对 60 题得银证书，断档也能补，毕业后可查看或下载证书。'],
+        ['14 天全库通刷', '「闯关答题」页顶部是 14 天健康体验营：每天固定 35 道新题，按科普库顺序排好，14 天不重不漏做完；做完当天 35 题就点亮日历，490 道题覆盖全部 486 篇科普文章。'],
+        ['金 / 银双证书', '14 天全勤做满 490 题得金证书；累计答对 350 题得银证书，断档也能补，毕业后可查看或下载证书。'],
         ['错了也有讲解', '每题都带解析与出处，答错的题自动进错题本、次日优先复习；情景演练会把整段医患对话演给你看。']
       ],
-      tip: '从今天的「完成今日任务」开始，连续 14 天就能拿到金证书。'
+      tip: '从今天的「完成今日任务」开始，每天 35 题，14 天就能刷完全部科普题并拿到金证书。'
     },
     {
       k: 'history', ic: '🏛️', title: '院史 · 抗战迁陕',
