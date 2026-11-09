@@ -1274,11 +1274,6 @@
 .qk-acts { display:flex; gap:9px; }
 .qk-acts .btn, .qk-acts .btn-ghost { flex:1; text-align:center; }
 
-/* 家庭急救卡：长图预览与入口 */
-.aid-img { display:block; width:100%; height:auto; margin:10px 0 2px;
-  border-radius:12px; border:1px solid rgba(255,255,255,.14); background:#FFFDF9; }
-.phone.day .aid-img { border-color:rgba(28,40,80,.12); }
-
 /* 薪火对照（院史页）：那时 / 今天 两条并列
    v6.52：原来年份、正文、入口按钮是三列 flex——年份列固定 70px 却只放得下
    「1939」四个数字，右边的「看 CPR ›」又占掉一截，正文实际只剩一半宽度，
@@ -1606,7 +1601,7 @@
     <span id="navTitle">薪火医语</span>
     <!-- v6.48：版本号挪进顶栏右侧空白区。原来挂在 .phone 上 bottom:6px，
          正好压在底部标签栏的「我的」上（真机截图实测）。 -->
-    <span class="ver" title="构建标识">v6.67</span>
+    <span class="ver" title="构建标识">v6.68</span>
   </div>
 
   <div class="screen" id="screen"></div>
@@ -26907,7 +26902,7 @@ function timeoutWrong(){
 }
 
 /* 版本号：显示在「我的」页底部，用来确认手机上打开的是不是最新版（缓存排查用） */
-var APP_VER='v6.67';
+var APP_VER='v6.68';
 /* 右下角构建标识跟着版本号走：以前写死在 HTML 里，升版会忘了改，截图对不上号 */
 (function(){
   function sync(){ var el=document.querySelector('.ver'); if(el) el.textContent=APP_VER; }
@@ -30867,12 +30862,6 @@ function renderProfile(){
           : '最强 '+P_SHORT[top.i]+' '+top.score+' 分 · 最需补 '+P_SHORT[low.i]+' '+low.score+' 分。')
       + '掌握度 = 该板块答题正确率 ×80% + 阅读覆盖 ×20%。</div></div>';
   html+='<div class="card"><div class="title" style="font-size:calc(16px * var(--fz))">学习记录</div><div class="heat-wrap">'+heatHtml()+'</div></div>';
-  /* 打卡档案卡片紧跟在学习记录之后：它就是「这些天数能不能留住」的答案。
-     脚本块在主块之后加载，这里做存在性保护，避免首帧渲染时函数还没定义。 */
-  /* 工具箱：把「能带走的东西」放在显眼处，而不是埋进设置里 */
-  html+='<div class="card"><div class="title" style="font-size:calc(16px * var(--fz))">工具箱</div>'
-      + '<div class="row" onclick="if(window.openAidCard)openAidCard()"><span>家庭急救卡</span><span class="muted">生成可保存的长图 ›</span></div>'
-      + '</div>';
   if(typeof ckCardHtml==='function') html+=ckCardHtml();
   html+='<div class="card"><div class="title">我的收藏</div>'+(favList.length===0?'<div class="muted">还没有收藏，去科普库点点收藏吧～</div>':
       '<div class="fav-search"><input id="favInp" placeholder="在收藏里搜索（如：烫伤、血压）" value="'+esc(favKw)+'" oninput="onFavInput(this.value)"><span class="fav-clr" id="favClr" onclick="onFavInput(\'\')">×</span></div>'
@@ -32281,400 +32270,6 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
 </script>
 
 <script>
-/* ===== 家庭急救卡的数据源 =====
-   首屏那排「急用」按钮已撤掉（见 README 三十四节）：星图的主线是逛，底部再压一排
-   红色按钮，既挡视线也把「点星看内容」这条唯一交互冲淡了。数据留着，给
-   「我的 → 家庭急救卡」生成那张可保存的长图用。
-   步骤仍逐条取自本站原文（cpr→P1-6、choke→P1-1、burn→P1-19、stroke→P1-11），
-   不另写一套说法，避免同一个人在两处读到互相矛盾的数字。 */
-var QUICK = {
-  cpr: {
-    t: '有人倒地', s: '心脏骤停 · 成人心肺复苏',
-    steps: [
-      '拍双肩、大声喊他，同时看胸廓有没有起伏',
-      '没反应也没呼吸：指定专人拨 120、专人去取 AED，你留下按压',
-      '掌根放在两乳头连线中点（胸骨下半段），双手交叠、肘关节伸直',
-      '用上身重量垂直下压 5—6 厘米，频率 100—120 次/分，每次让胸廓完全回弹',
-      '每按 30 次给 2 次人工呼吸；没受过训练就只做持续按压，一样有效',
-      'AED 到了立刻开机，按语音提示贴片，电击后马上接着按'
-    ],
-    warn: '不要因为怕压断肋骨而不敢用力——不按压才是真正的风险。也不要中途停下来「看看有没有好」。'
-  },
-  choke: {
-    t: '异物卡喉', s: '气道梗阻 · 海姆立克',
-    steps: [
-      '还能咳嗽、能说话：鼓励他用力咳，你在旁边守着，别拍背、别抠喉咙',
-      '不能说话、不能咳、面色发紫、双手掐喉：立即腹部冲击',
-      '站到他身后，一手握拳，拇指侧顶在肚脐上方约两横指处',
-      '另一手包住拳头，快速向后上方冲击，一下一下做，直到异物排出',
-      '人一旦软倒、失去反应：立即放平做心肺复苏，同时拨 120'
-    ],
-    warn: '不要用手盲目抠挖，不要喂水喂饭——都可能把异物推得更深。'
-  },
-  burn: {
-    t: '烧烫伤', s: '冲 · 脱 · 泡 · 盖 · 送',
-    steps: [
-      '冲：用流动自来水（15—25℃，不是冰水）冲创面 15—20 分钟，直到疼痛明显减轻',
-      '脱：边冲边小心脱去衣物；粘在创面上的别硬撕，用剪刀剪开周围',
-      '泡：还疼就继续泡在凉水里降温',
-      '盖：用干净纱布或无菌敷料松松覆盖，保持清洁',
-      '送：起大疱、皮肤发白或焦黄、面积超过他自己一个手掌、位于面颈关节会阴、老人婴幼儿或糖尿病患者的烫伤——立即就医'
-    ],
-    warn: '牙膏、酱油、香灰、獾油都不要涂；冰块不要直接敷；水疱不要自己挑破。'
-  },
-  stroke: {
-    t: '卒中', s: 'FAST · 30 秒判断',
-    steps: [
-      'Face 面部：让他笑一下，看嘴角是否歪斜',
-      'Arm 手臂：双手平举 10 秒，看是否有一侧往下掉',
-      'Speech 语言：让他说一句完整的话，看是否含糊、找词困难',
-      'Time 时间：记下他最后正常的时间，立刻拨 120',
-      '等车时让他平卧、头偏向一侧，解开领口，不要喂水喂药'
-    ],
-    warn: '不要自行喂阿司匹林或降压药——出血性与缺血性卒中的处理方向相反，吃错会加重。'
-  }
-};
-
-/* ===== 家庭急救卡长图 =====
-   为什么用 Canvas 手画而不是截图 DOM：这个页面要能离线打开（file:// 也行），
-   引 html2canvas 这类库既加体积又要外网，而 SVG→图片又会被外链字体卡住。
-   Canvas 只依赖系统字体，导出 PNG 不会被跨域污染，是这里唯一稳的做法。
-
-   内容不另写一份：直接读 QUICK（首屏那四张速查卡），保证长图、速查卡、原文三处口径一致。 */
-var EC_FONT = '"PingFang SC","Microsoft YaHei","Heiti SC","Noto Sans CJK SC",sans-serif';
-
-function ecFont(ctx, size, weight){ ctx.font = (weight || '400') + ' ' + size + 'px ' + EC_FONT; }
-
-/* 按「中文逐字、英文数字整词」断行：不把 120、AED、5—6 这类内容从中间劈开 */
-function ecWrap(ctx, text, size, weight, maxW){
-  ecFont(ctx, size, weight);
-  var toks = String(text == null ? '' : text).match(/[A-Za-z0-9]+|\s+|[\s\S]/g) || [];
-  var lines = [], cur = '', i, t, cand;
-  function pass(w){
-    var out = [], c = '', j, tk, cd;
-    for (j = 0; j < toks.length; j++){
-      tk = toks[j]; cd = c + tk;
-      if (c && ctx.measureText(cd).width > w){
-        out.push(c.replace(/\s+$/, ''));
-        c = /^\s+$/.test(tk) ? '' : tk;
-      } else { c = cd; }
-    }
-    if (c) out.push(c.replace(/\s+$/, ''));
-    return out;
-  }
-  lines = pass(maxW);
-  /* 孤字：末行只剩一两个字时，整段放宽 1.4% 重排——这一步在卡片内边距里，不会顶到边框 */
-  if (lines.length > 1 && lines[lines.length - 1].replace(/\s+/g, '').length <= 2){
-    var alt = pass(maxW * 1.014);
-    if (alt.length < lines.length) lines = alt;
-  }
-  cur = '';
-  /* 避头尾：中文标点不该出现在行首。宁可让上一行多一个字，也不要「，直到……」这种开头 */
-  var NO_HEAD = '，。、；：？！）】》」』”’%,.;:?!)]}·…';
-  for (var i = 1; i < lines.length; i++){
-    while (lines[i] && NO_HEAD.indexOf(lines[i].charAt(0)) >= 0){
-      lines[i - 1] += lines[i].charAt(0);
-      lines[i] = lines[i].slice(1);
-    }
-  }
-  return lines.length ? lines : [''];
-}
-
-function ecRound(ctx, x, y, w, h, r){
-  ctx.beginPath();
-  if (ctx.roundRect) { ctx.roundRect(x, y, w, h, r); return; }
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
-}
-
-function ecBuild(){
-  var W = 1080, PAD = 66, CW = W - PAD * 2;
-  var INK = '#1E2233', SUB = '#5A6276', RED = '#D6453D', RED_D = '#B03129';
-  var SOFT = '#FDEEEA', LINE = '#EEE3DB', BG = '#FFFDF9', WHITE = '#FFFFFF';
-  var mc = document.createElement('canvas').getContext('2d');
-
-  /* ---- 第一遍：先把文字全部折行，量出总高 ---- */
-  var KEY = ['cpr', 'choke', 'burn', 'stroke'];
-  var cards = KEY.map(function (k) {
-    var d = QUICK[k];
-    var inner = CW - 52;
-    var stepW = inner - 46;
-    return {
-      d: d,
-      stepLines: d.steps.slice(0, 5).map(function (s) {
-        var sz = 28, ls = ecWrap(mc, s, sz, '400', stepW);
-        if (ls.length > 1 && ls[ls.length - 1].replace(/\s+/g, '').length <= 2){
-          var ls2 = ecWrap(mc, s, 27, '400', stepW);
-          if (ls2.length < ls.length) { ls = ls2; sz = 27; }
-        }
-        return { ls: ls, sz: sz };
-      }),
-      warnLines: ecWrap(mc, d.warn || '', 25, '400', inner - 40)
-    };
-  });
-
-  var HEAD = { t: '家庭急救卡', s: '四种要抢时间的情况，一页看完；不用翻长文' };
-  var ORG = '西安交通大学第二附属医院 · 薪火医语';
-  var CALL_L2 = '说清三件事：在哪 · 发生了什么 · 现在有没有意识和呼吸';
-  var SRC = '依据：《中国公民健康素养——基本知识与技能（2024年版）》（国卫办宣传函〔2024〕191号）第 60、61、62 条；《救护员培训：心肺复苏·创伤救护·气道异物梗阻》（中国红十字会总会）。';
-  var DISC = '本卡仅供健康科普，不替代执业医师的诊断与治疗建议。如有不适，请及时前往正规医疗机构就诊。';
-  var srcLines = ecWrap(mc, SRC, 21, '400', CW);
-  var discLines = ecWrap(mc, DISC, 21, '400', CW);
-  var callL2Lines = ecWrap(mc, CALL_L2, 26, '400', CW - 120);
-
-  /* 高度累加 */
-  var HEAD_H = 16 + 54 + 76 + 52 + 46 + 34 + 26;   // 红条 / 标题 / 副标题 / 机构 / 间距 / 分隔线
-  var y = HEAD_H;
-  var cardTops = [];
-  cards.forEach(function (c) {
-    cardTops.push(y);
-    var h = 24 + 46 + 12;                       // 上留白 + 标题行 + 间距
-    c.stepLines.forEach(function (st) { h += st.ls.length * 44 + 14; });
-    h += 14;
-    h += c.warnLines.length * 38 + 30;          // 警示块
-    h += 22;
-    y += h + 16;
-  });
-  y += 10;
-  var callTop = y;
-  var callH = 160 + (callL2Lines.length - 1) * 38 + 30;
-  y += callH + 48;
-  var srcTop = y;
-  y += srcLines.length * 34 + 10;
-  y += discLines.length * 34 + 20;
-  var footTop = y;
-  y += 44;
-  var stampTop = y;
-  y += 30;
-  var H = Math.round(y);
-
-  /* ---- 第二遍：真正画 ---- */
-  var cv = document.createElement('canvas');
-  cv.width = W; cv.height = H;
-  var ctx = cv.getContext('2d');
-  ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
-
-  /* 顶部红条 + 极淡的红晕，避免整张纯白显得像草稿 */
-  var g = ctx.createLinearGradient(0, 0, W, 0);
-  g.addColorStop(0, '#D6453D'); g.addColorStop(.55, '#E4705B'); g.addColorStop(1, '#F0A07E');
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, 16);
-
-  ctx.textBaseline = 'alphabetic';
-  ctx.fillStyle = INK; ecFont(ctx, 76, '800');
-  ctx.fillText(HEAD.t, PAD, 16 + 54 + 76);          // 主标题基线
-  ctx.fillStyle = SUB; ecFont(ctx, 28, '400');
-  ctx.fillText(HEAD.s, PAD, 16 + 54 + 76 + 52);     // 副标题基线
-  ctx.fillStyle = RED_D; ecFont(ctx, 23, '600');
-  ctx.fillText(ORG, PAD, 16 + 54 + 76 + 52 + 46);   // 机构行
-  var divY = 16 + 54 + 76 + 52 + 46 + 34;
-  ctx.strokeStyle = LINE; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(PAD, divY); ctx.lineTo(W - PAD, divY); ctx.stroke();
-  var py = HEAD_H;
-
-  cards.forEach(function (c, i) {
-    var d = c.d;
-    var inner = CW - 52;
-    /* 卡片底 */
-    var headH = 46;
-    var bodyH = 24 + headH + 12;
-    c.stepLines.forEach(function (st) { bodyH += st.ls.length * 44 + 14; });
-    bodyH += 14 + c.warnLines.length * 38 + 30 + 22;
-    ctx.fillStyle = WHITE; ecRound(ctx, PAD, py, CW, bodyH, 26); ctx.fill();
-    ctx.strokeStyle = LINE; ctx.lineWidth = 2; ctx.stroke();
-
-    var cx = PAD + 26, cy = py + 24;
-    /* 序号圆 + 名称 */
-    ctx.fillStyle = RED; ctx.beginPath();
-    ctx.arc(cx + 23, cy + 23, 23, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = WHITE; ecFont(ctx, 26, '800'); ctx.textAlign = 'center';
-    ctx.fillText(String(i + 1), cx + 23, cy + 32);
-    ctx.textAlign = 'left';
-    ctx.fillStyle = INK; ecFont(ctx, 38, '800');
-    ctx.fillText(d.t, cx + 60, cy + 34);
-    var nameW = ctx.measureText(d.t).width;
-    ctx.fillStyle = SUB; ecFont(ctx, 23, '400');
-    ctx.fillText(d.s, cx + 60 + nameW + 16, cy + 33);
-    cy += headH + 12;
-
-    /* 步骤 */
-    c.stepLines.forEach(function (st, si) {
-      ctx.fillStyle = RED_D; ecFont(ctx, 22, '700'); ctx.textAlign = 'center';
-      ctx.fillText(String(si + 1), cx + 10, cy + 31);
-      ctx.textAlign = 'left';
-      ctx.fillStyle = INK; ecFont(ctx, st.sz, '400');
-      st.ls.forEach(function (ln, li) { ctx.fillText(ln, cx + 34, cy + 31 + li * 44); });
-      cy += st.ls.length * 44 + 14;
-    });
-
-    /* 警示块 */
-    cy += 2;
-    var wbH = c.warnLines.length * 38 + 30;
-    ctx.fillStyle = SOFT; ecRound(ctx, cx, cy, inner, wbH, 14); ctx.fill();
-    ctx.fillStyle = RED; ecFont(ctx, 22, '800');
-    ctx.fillText('禁', cx + 16, cy + 32);
-    ctx.fillStyle = RED_D; ecFont(ctx, 25, '400');
-    c.warnLines.forEach(function (ln, li) { ctx.fillText(ln, cx + 44, cy + 32 + li * 38); });
-
-    py += bodyH + 16;
-  });
-
-  /* 120 块 */
-  ctx.fillStyle = RED; ecRound(ctx, PAD, callTop, CW, callH, 26); ctx.fill();
-  var gx = ctx.createLinearGradient(PAD, callTop, PAD + CW, callTop + callH);
-  gx.addColorStop(0, 'rgba(255,255,255,.10)'); gx.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = gx; ecRound(ctx, PAD, callTop, CW, callH, 26); ctx.fill();
-
-  ctx.fillStyle = '#FFCFC6'; ecFont(ctx, 24, '600');
-  ctx.fillText('急救电话', PAD + 34, callTop + 46);
-  ctx.fillStyle = WHITE; ecFont(ctx, 68, '800');
-  ctx.fillText('120', PAD + 30, callTop + 116);
-  ctx.fillStyle = '#FFE3DC'; ecFont(ctx, 25, '400');
-  callL2Lines.forEach(function (ln, i) { ctx.fillText(ln, PAD + 34, callTop + 160 + i * 38); });
-
-  /* 依据与免责 */
-  ctx.fillStyle = SUB; ecFont(ctx, 21, '400');
-  srcLines.forEach(function (ln, i) { ctx.fillText(ln, PAD, srcTop + i * 34); });
-  ctx.fillStyle = '#8A7488'; ecFont(ctx, 21, '400');
-  discLines.forEach(function (ln, i) { ctx.fillText(ln, PAD, footTop + i * 34); });
-
-  /* 落款：打印出来也知道是哪一版、什么时候打的 */
-  var d0 = new Date();
-  var stamp = '薪火医语 · 西安交通大学第二附属医院 · 生成于 '
-    + d0.getFullYear() + '-' + ('0' + (d0.getMonth() + 1)).slice(-2) + '-' + ('0' + d0.getDate()).slice(-2);
-  ctx.fillStyle = '#A99AA6'; ecFont(ctx, 19, '400');
-  ctx.textAlign = 'right';
-  ctx.fillText(stamp, W - PAD, stampTop);
-  ctx.textAlign = 'left';
-  return cv;
-}
-
-window.openAidCard = function () {
-  var cv, url;
-  try { cv = ecBuild(); url = cv.toDataURL('image/png'); }
-  catch (e) { alert('这台设备不支持生成图片，请更新浏览器后再试'); return; }
-  window.__aidUrl = url;
-  var h = '<div class="card">'
-    + '<span class="tag">工具箱 · 可保存 / 打印</span>'
-    + '<div class="d-head"><div class="d-title">家庭急救卡</div></div>'
-    + '<div class="muted d-sum">一张长图，四种情况的处理步骤。存进相册，或打印一张贴在冰箱上。</div>'
-    + '<img class="aid-img" src="' + url + '" alt="家庭急救卡长图">'
-    + '<div class="qk-more">手机上长按图片保存到相册；电脑上点「保存图片」下载 PNG（1080 × ' + cv.height + '）。</div>'
-    + '<div class="qk-acts"><div class="btn" onclick="saveAidCard()">保存图片</div>'
-    + '<div class="btn-ghost" onclick="shareAidCard()">发给家人</div>'
-    + '<div class="btn-ghost" onclick="closeDetail()">关闭</div></div>'
-    + '<div class="disclaimer">' + esc(DISCLAIMER) + '</div></div>';
-  document.getElementById('ovTitle').textContent = '家庭急救卡';
-  var ob = document.getElementById('ovBody');
-  ob.innerHTML = h; ob.scrollTop = 0;
-  document.getElementById('overlay').classList.add('show');
-};
-
-window.saveAidCard = function () {
-  var url = window.__aidUrl;
-  if (!url) return;
-  var a = document.createElement('a');
-  a.href = url;
-  a.download = '薪火医语-家庭急救卡.png';
-  if (document.body && document.body.appendChild) document.body.appendChild(a);
-  a.click();
-  setTimeout(function () { if (a.parentNode) a.parentNode.removeChild(a); }, 0);
-};
-
-/* ===== 急救卡转发家人（v6.46）=====
-   急救卡的真正用途是「贴在冰箱上、发给家里人」，而不是让用户自己看。
-   所以转发不是加分项，是这张卡的主用途。
-   实现要点：
-     · navigator.share 必须在「用户点击的同步调用栈」里调用——
-       一旦放进 setTimeout / Promise.then，用户激活状态就没了，
-       系统分享面板会直接报 NotAllowedError。这是 Web Share 最常见的坑。
-     · 微信内置浏览器对 files 分享支持不稳定，所以文字 + 图片两条路都给。
-     · 分享失败不弹错误框，改为把文字复制好并提示用户手动粘贴——
-       「转发」这个动作失败不该让用户白点一次。 */
-var AID_TEXT = '我把西安交大二附院整理的《家庭急救卡》发给你了——上面有烫伤、卡喉、'
-  + '心跳骤停、食物中毒 四种情况的处理步骤，贴在冰箱上备着。';
-
-/* 把 dataURL 转成 File，失败返回 null（部分 WebView 不支持 atob/File） */
-function aidFile(){
-  try{
-    var url = window.__aidUrl;
-    if(!url || url.indexOf('data:image/png;base64,')!==0) return null;
-    var b64 = url.slice('data:image/png;base64,'.length);
-    var bin = atob(b64);
-    var buf = new Uint8Array(bin.length);
-    for(var i=0;i<bin.length;i++) buf[i]=bin.charCodeAt(i);
-    if(typeof File!=='undefined') return new File([buf], '家庭急救卡.png', {type:'image/png'});
-  }catch(e){}
-  return null;
-}
-
-/* 主入口：点「发给家人」 */
-window.shareAidCard = function () {
-  var text = AID_TEXT;
-  var hasShare = !!(navigator && navigator.share);
-  if(!hasShare){
-    /* 不支持系统分享：退一步——把说明文字复制好，用户粘贴到家庭群即可 */
-    if(typeof copyText==='function'){
-      try{ copyText(text); }catch(e){}
-    }
-    var ob=document.getElementById('ovBody');
-    if(ob){
-      var tip=document.getElementById('aidShareTip');
-      if(!tip){
-        tip=document.createElement('div');
-        tip.id='aidShareTip';
-        tip.className='ck-tip';
-        tip.style.marginTop='8px';
-        ob.appendChild(tip);
-      }
-      tip.textContent='这台设备不支持一键分享，说明文字已复制，粘贴到家庭群即可；图片请长按保存后发送。';
-    }
-    return;
-  }
-  var file = aidFile();
-  /* 有图片就走文件分享；没有就分享文字。
-     注意：navigator.share 必须同步调用，不能 await 之后再来。 */
-  if(file && navigator.canShare){
-    try{
-      if(navigator.canShare({ files:[file] })){
-        navigator.share({ title:'家庭急救卡', text:text, files:[file] })
-          .catch(function(e){ aidShareFallback(text, e); });
-        return;
-      }
-    }catch(e){}
-  }
-  try{
-    navigator.share({ title:'家庭急救卡', text:text })
-      .catch(function(e){ aidShareFallback(text, e); });
-  }catch(e){ aidShareFallback(text, e); }
-};
-
-/* 分享被拒或失败：把文字复制好，让用户手动粘贴，不弹错误框 */
-function aidShareFallback(text, e){
-  var why = (e && e.name==='AbortError') ? '你取消了分享' : '这台设备暂时无法分享';
-  try{ if(typeof copyText==='function') copyText(text); }catch(_){}
-  var ob=document.getElementById('ovBody');
-  if(ob){
-    var tip=document.getElementById('aidShareTip');
-    if(!tip){
-      tip=document.createElement('div');
-      tip.id='aidShareTip';
-      tip.className='ck-tip';
-      tip.style.marginTop='8px';
-      ob.appendChild(tip);
-    }
-    tip.textContent=why+'。说明文字已复制，粘贴到家庭群即可；图片请长按保存后发送。';
-  }
-}
-
-/* v6.65：「带教视角 / 床旁教学卡」整块下线。
-   TEACH 数据、详情页挂载、教学卡弹层与相关 CSS 一并删除；
-   院史页「一条脉络」第三条改为普通文章链接，不留死链。 */
-</script>
-<script>
 /* ===== v6.65：12 位号码与云端打卡同步已下线 =====
    原「号码 + 云端」只同步打卡日期、还要联网，和「一次带走全部数据、
    不用联网」的离线备份码重复，按用户要求整体删除：
@@ -32950,12 +32545,14 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 else setTimeout(ckBoot, 0);
 </script>
 <script>
-/* ===== 新手引导（v6.67 按最新功能重写）=====
+/* ===== 新手引导（v6.67 按最新功能重写，v6.68 删工具箱）=====
    开场给两个选项，对应两类人：
    · 新手  → 6 步，一个模块一步，讲清「这个模块能干什么、怎么点」；
    · 老用户 → 直接落到「我的」，打开备份码恢复框，粘贴一段文字就接回记录。
    v6.67 对齐：14 天体验营与 490 题全库覆盖、金 / 银双证书、AI 免责只在页底一行、
    打卡改为本机模式 + 备份码迁移（不再有档案号 / 云端同步 / 战绩海报 / 床旁教学卡）。
+   v6.68：「我的」页工具箱与家庭急救卡整块下线，第 5 步不再介绍长图保存 / 转发；
+          第 6 步备份码仍是唯一的记录迁移方式。
    只在首次自动弹（localStorage + cookie + sessionStorage 三重兜底）；
    之后任何时候都能从「我的 → 设置与隐私 → 新手引导」重看，也能在那里关掉自动弹出。
    引导打开期间把 3D 星图暂停（G.active=false），省电也省帧——它被盖住了，没必要继续画。 */
@@ -33015,8 +32612,7 @@ else setTimeout(ckBoot, 0);
       items: [
         ['积分与等级', '从「脉息初现」到「共生平衡」共 10 阶，答题、闯关和完成今日任务都会涨分。'],
         ['六板块能力图谱', '看哪块练得多、哪块最该补；掌握度 = 答题正确率 ×80% + 阅读覆盖 ×20%。'],
-        ['记录与收藏', '近 5 周学习热力图、可搜索的收藏夹，还有日间 / 夜间、字号三档和高对比度。'],
-        ['工具箱', '「家庭急救卡」生成一张长图，可存相册、打印贴冰箱，或转发给家里人。']
+        ['记录与收藏', '近 5 周学习热力图、可搜索的收藏夹，还有日间 / 夜间、字号三档和高对比度。']
       ],
       tip: '往下翻一点是「数据备份与迁移」，就是下一步要讲的东西。'
     },
