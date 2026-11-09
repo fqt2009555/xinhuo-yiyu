@@ -1601,7 +1601,7 @@
     <span id="navTitle">薪火医语</span>
     <!-- v6.48：版本号挪进顶栏右侧空白区。原来挂在 .phone 上 bottom:6px，
          正好压在底部标签栏的「我的」上（真机截图实测）。 -->
-    <span class="ver" title="构建标识">v6.69</span>
+    <span class="ver" title="构建标识">v6.70</span>
   </div>
 
   <div class="screen" id="screen"></div>
@@ -25029,7 +25029,41 @@ var AI_PUBLIC = window.AI_CONFIG || {
   oauthRelayBaseUrl: '',
   publishableKey: ''
 };
-var AI = { cloud:null, model:'', ready:false, tried:false, busy:false, lastCall:0, lastUsage:null, lastReasoning:'', models:[], modelIdx:0 };
+var AI = { cloud:null, model:'', ready:false, tried:false, busy:false, lastCall:0, lastUsage:null, lastReasoning:'', models:[], modelRates:[], modelIdx:0, rateBlocked:false };
+/* ===== v6.70：按「积分倍率」从低到高使用模型，倍率 > AI_MAX_RATE 停止模型问答 =====
+   平台 models.list() 的 credits 是字符串，形如 "x0.00 credits" / "x0.50" / "x2.20 credits"，
+   取 x 后面的数字即倍率。少数模型不带 credits：只放行实测零消耗的快速兜底 hunyuan-chat，
+   其余「倍率未知」一律跳过，宁可不用也不能误用高价模型。
+   过滤后按倍率升序；同倍率时优先实测能吐正文的 hy3，其次快速兜底 hunyuan-chat。
+   一个合格候选都没有时 rateBlocked=true、AI.ready=false，问答全部回落本地知识库。 */
+var AI_MAX_RATE=0.5;
+function modelRate(m){
+  if(!m) return null;
+  var mt=/x\s*([0-9]+(?:\.[0-9]+)?)/i.exec(String(m.credits||''));
+  if(mt) return parseFloat(mt[1]);
+  if(m.id==='hunyuan-chat') return 0;   /* 目录无 credits，实测零消耗、几秒出正文 */
+  return null;
+}
+function rankModelsByRate(list){
+  var ranked=[];
+  for(var i=0;i<(list||[]).length;i++){
+    var mm=list[i];
+    if(!mm || mm.disabled===true || mm.enabled===false) continue;
+    if(mm.id==='default'||mm.id==='auto'||/image|video|^kling|^minimax-video/.test(mm.id)) continue;
+    var rate=modelRate(mm);
+    if(rate===null || rate>AI_MAX_RATE) continue;   /* 倍率未知或超过上限：不调用 */
+    ranked.push({id:mm.id, rate:rate, trusted:(mm.id==='hy3'?0:(mm.id==='hunyuan-chat'?1:2)), order:i});
+  }
+  ranked.sort(function(a,b){
+    if(a.rate!==b.rate) return a.rate-b.rate;
+    if(a.trusted!==b.trusted) return a.trusted-b.trusted;
+    return a.order-b.order;
+  });
+  var out={models:[], rates:[], blocked:false};
+  for(var k=0;k<ranked.length;k++){ out.models.push(ranked[k].id); out.rates.push(ranked[k].rate); }
+  out.blocked=(list||[]).length>0 && !out.models.length;
+  return out;
+}
 
 /* 闸门A：本院院史意图词（命中即锁定院史库）
    原则：宁可误收、不可漏放——误收最多答非所问，漏放会让模型编造本院史、被本院评委当场识破。
@@ -25140,6 +25174,7 @@ function matchAnswer(q){ var r=localRetrieve(q,{}); return localFallback(r); }
 /* ============ 免密钥大模型封装（CDN 全局 WorkBuddyCloud） ============ */
 function initAI(){
   if(AI.ready) return;
+  if(AI.rateBlocked) return;   /* v6.70：全部候选超倍率，停止模型问答，不再反复拉目录 */
   if(!aiEnabled()){ updateQaHint(); return; }   /* 省额度模式不建立连接，零请求零消耗 */
   try{
     /* v6.63 竞态修复：SDK 异步注入，DOMContentLoaded 时常常还没加载完。
@@ -25152,26 +25187,15 @@ function initAI(){
     });
     if(AI.cloud && AI.cloud.llm && AI.cloud.llm.models && AI.cloud.llm.models.list){
       AI.cloud.llm.models.list().then(function(models){
-        var list=(models||[]).filter(function(m){ return m && m.disabled!==true && m.enabled!==false; });
-        /* 实测结论（2026-10-31，同一问题「高血压日常怎么管理？」）：
-           hy3 约 14.4s 完成，正文 149 字、finish=stop、credit=0（限时免费通道），定为首选；
-           hy3-x 同属推理但 credit=0.07，勿混用；hunyuan-chat 零思考、几秒完成、credit=0，作快速兜底。
-           default / auto 实际路由到推理模型且更慢，12s 内吐不出正文，曾导致空响应降级，故不用。
-           注意：default/auto 的 supportsReasoning 字段是 undefined，不能靠该字段判断是否推理。 */
-        var preferred=['hy3','hunyuan-chat','hy3-x','glm-5.0','deepseek-v4-flash'];
-        AI.models=[];
-        for(var p=0;p<preferred.length;p++){
-          for(var i=0;i<list.length;i++){ if(list[i].id===preferred[p]){ AI.models.push(list[i].id); break; } }
-        }
-        if(!AI.models.length){   /* 候选表全不在列表里时的保守兜底 */
-          for(var j=0;j<list.length && AI.models.length<3;j++){
-            var mm=list[j];
-            if(mm.id==='default'||mm.id==='auto'||/image|video/.test(mm.id)) continue;
-            AI.models.push(mm.id);
-          }
-        }
+        /* v6.70：不再写死候选表，按平台返回的 credits 倍率升序挑模型，
+           倍率 >0.5 或倍率未知的一律不调用；全部超限时 rateBlocked=true 并回落本地知识库。 */
+        var ranked=rankModelsByRate(models);
+        AI.models=ranked.models;
+        AI.modelRates=ranked.rates;
         AI.modelIdx=0;
+        AI.rateBlocked=ranked.blocked;
         if(AI.models.length){ AI.model=AI.models[0]; AI.ready=true; }
+        else { AI.ready=false; }
         updateQaHint();
       })['catch'](function(){ updateQaHint(); });
     }
@@ -25281,7 +25305,7 @@ function toggleAiMode(){
   if (window.AI_CONFIG && window.AI_CONFIG.FORCE_LOCAL) return;  /* 干净版不提供联网切换 */
   try{ localStorage.setItem(AI_MODE_KEY, aiEnabled()?'local':'ai'); }catch(e){}
   /* v6.63：从「仅本地」切回 AI 时清掉上次失败状态，允许重新连接 */
-  if(aiEnabled()){ AI.tried=false; AI.cloud=null; initAI(); }
+  if(aiEnabled()){ AI.tried=false; AI.cloud=null; AI.rateBlocked=false; initAI(); }
   if(typeof render==='function') render();
   updateQaHint(); qaScroll();
 }
@@ -25292,6 +25316,7 @@ function toggleAiMode(){
 function aiHintText(){
   if (window.AI_CONFIG && window.AI_CONFIG.FORCE_LOCAL)
     return '本地健康知识库 · 院史与科普问答（实时 AI 大模型演示见 WorkBuddy 版链接）';
+  if(AI.rateBlocked) return '当前没有符合倍率上限的可用模型，已停用模型问答 · 改用本地健康知识库';
   if(AI.busy) return 'AI 正在思考，通常 10～20 秒，请稍候…';
   if(!aiEnabled()) return '当前只用本地健康知识库作答 · 点上方「AI 深度问答」可开启联网问答';
   if(AI.ready) return 'AI 已接入 · 回答由 AI 生成，仅供参考 · 今日还可问 '+aiQuotaLeft().left+' 次';
@@ -25559,7 +25584,15 @@ function sendQA(){
   initAI();
   if(!AI.ready){
     var fb=localFallback(rec);
-    finish(fb.text, fb.disclaimer||DISCLAIMER, '健康知识库', jumpOf(rec));
+    var fbTip=AI.rateBlocked?' · 当前没有符合倍率上限的可用模型，已改用本地知识库':'';
+    finish(fb.text, (fb.disclaimer||DISCLAIMER)+fbTip, '健康知识库'+(AI.rateBlocked?'（倍率上限）':''), jumpOf(rec));
+    return;
+  }
+  /* v6.70 硬闸：真的要发请求前再查一次当前候选倍率，>0.5 立即停止模型问答 */
+  if(typeof AI.modelRates[AI.modelIdx]==='number' && AI.modelRates[AI.modelIdx]>AI_MAX_RATE){
+    var fbr=localFallback(rec);
+    AI.ready=false; AI.rateBlocked=true;
+    finish(fbr.text, (fbr.disclaimer||DISCLAIMER)+' · 当前模型倍率超过 0.5，已停用模型问答', '健康知识库（倍率上限）', jumpOf(rec));
     return;
   }
   var quota=aiQuotaLeft();
@@ -25574,7 +25607,11 @@ function sendQA(){
   var streamed='', attempts=0;
   /* 某些模型只输出思考、20s 内吐不出正文（实测 default/auto/hy3 如此）。
      遇到空正文或异常时自动切到候选表下一个模型重试，最多换 2 次。 */
-  var canSwitch=function(){ return attempts<2 && AI.models && AI.modelIdx<AI.models.length-1; };
+  /* v6.70：候选已按倍率升序且过滤掉 >0.5；这里再加一道闸，切到超限模型一律停止 */
+  var canSwitch=function(){
+    return attempts<2 && AI.models && AI.modelIdx<AI.models.length-1
+      && !(typeof AI.modelRates[AI.modelIdx+1]==='number' && AI.modelRates[AI.modelIdx+1]>AI_MAX_RATE);
+  };
   var switchModel=function(){
     attempts++; AI.modelIdx++; AI.model=AI.models[AI.modelIdx];
     streamed=''; bot.text='正在切换模型并重新思考…'; bot.streaming=true;
@@ -26902,7 +26939,7 @@ function timeoutWrong(){
 }
 
 /* 版本号：显示在「我的」页底部，用来确认手机上打开的是不是最新版（缓存排查用） */
-var APP_VER='v6.69';
+var APP_VER='v6.70';
 /* 右下角构建标识跟着版本号走：以前写死在 HTML 里，升版会忘了改，截图对不上号 */
 (function(){
   function sync(){ var el=document.querySelector('.ver'); if(el) el.textContent=APP_VER; }
