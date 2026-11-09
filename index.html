@@ -717,7 +717,7 @@
   .phone.day .sr-item.ok .sr-a { color:#1F8F45; } .phone.day .sr-item.no .sr-a { color:#C0392B; }
   .sr-r { font-size:calc(11px * var(--fz)); color:var(--glow-warm); margin-top:3px; }
 
-  /* 战绩海报弹层 */
+  /* 弹层样式：毕业证书复用（v6.64 战绩海报已删除） */
   .poster-mask {
     position:fixed; inset:0; z-index:9999; background:rgba(4,6,20,.88);
     display:flex; align-items:center; justify-content:center; padding:16px;
@@ -1384,6 +1384,16 @@
 .ck-card .ck-in .btn { flex: 0 0 auto; padding: 9px 14px; font-size:calc(12.5px * var(--fz)); }
 .ck-card .ck-line { font-size:calc(13px * var(--fz)); color: #e8d7c6; margin: 8px 0 2px; }
 .ck-card .ck-line b { color: #FFD27A; font-weight: 700; }
+  /* v6.64：档案号与备份码合卡后，号码压缩成状态行旁的一行小字，
+     同步入口也收进状态行，不再各自占一块。 */
+  .ck-card .ck-sync { margin-left: 6px; color: #FFD27A; cursor: pointer;
+    text-decoration: underline; text-underline-offset: 2px; }
+  .ck-card .ck-num { display: flex; align-items: center; gap: 8px; margin-top: 7px;
+    font-size:calc(11.5px * var(--fz)); color: var(--muted); cursor: pointer; }
+  .ck-card .ck-num b { flex: 1; font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size:calc(12.5px * var(--fz)); letter-spacing: .08em; color: #FFD27A; }
+  .ck-card .ck-num span { color: rgba(255,210,122,.78); white-space: nowrap; }
+  .phone.day .ck-card .ck-num b, .phone.day .ck-card .ck-sync { color: #7E5F1C; }
 .ck-card .ck-note { font-size:calc(11.5px * var(--fz)); line-height: 1.6; color: var(--muted); margin-bottom: 6px; }
 .ck-card .ck-tip { font-size:calc(11px * var(--fz)); line-height: 1.55; color: #9fb0a8; background: rgba(120,220,180,.06);
   border-left: 2px solid rgba(120,220,180,.45); padding: 7px 10px; border-radius: 0 8px 8px 0; margin-top: 8px; }
@@ -1401,7 +1411,7 @@
   .ck-card .ck-btns .btn-ghost { flex: 1; text-align: center; padding: 9px 6px; font-size:calc(12.5px * var(--fz)); cursor: pointer; }
   .ck-card .ck-btns .btn { flex: 1; text-align: center; }
   /* ===== 离线备份区 ===== */
-  .ck-card .bk-box { margin-top: 12px; padding-top: 11px; border-top: 1px dashed var(--stroke); }
+  .ck-card .bk-box { margin-top: 10px; }
   .ck-card .bk-t { font-size:calc(13px * var(--fz)); font-weight: 700; color: var(--glow-warm); margin-bottom: 4px; }
   .phone.day .ck-card .bk-t { color: #7E5F1C; }
   .ck-card .bk-note { font-size:calc(11px * var(--fz)); line-height: 1.6; color: var(--muted); margin-bottom: 8px; }
@@ -1646,7 +1656,7 @@
     <span id="navTitle">薪火医语</span>
     <!-- v6.48：版本号挪进顶栏右侧空白区。原来挂在 .phone 上 bottom:6px，
          正好压在底部标签栏的「我的」上（真机截图实测）。 -->
-    <span class="ver" title="构建标识">v6.63</span>
+    <span class="ver" title="构建标识">v6.64</span>
   </div>
 
   <div class="screen" id="screen"></div>
@@ -26944,7 +26954,7 @@ function timeoutWrong(){
 }
 
 /* 版本号：显示在「我的」页底部，用来确认手机上打开的是不是最新版（缓存排查用） */
-var APP_VER='v6.63';
+var APP_VER='v6.64';
 /* 右下角构建标识跟着版本号走：以前写死在 HTML 里，升版会忘了改，截图对不上号 */
 (function(){
   function sync(){ var el=document.querySelector('.ver'); if(el) el.textContent=APP_VER; }
@@ -30146,105 +30156,7 @@ function rePickQuiz(){ clearTimer(); Q.stage='pick'; Q.done=false; Q.lvP=-1; ren
 function openQuizSrc(){ clearTimer(); if(Q.srcId) openDetail('article',Q.srcId); }
 
 
-/* ===== 战绩海报 ===== */
-function posterData(){
-  var rec=state.quiz||{}, answered=rec.answered||0, correct=rec.correct||0;
-  var rate=answered?Math.round(correct/answered*100):0;
-  /* 排行榜已移除：原「击败了 X% 的参与者」是拿虚构榜单算出来的，现改为真实可核对的知识掌握度（正确率） */
-  var mastery=rate;
-  var badges=0; Object.keys(state.badges||{}).forEach(function(k){ if((state.badges[k]||0)>=BADGE_NEED) badges++; });
-  return {name:'健康探秘者', answered:answered, correct:correct, rate:rate, mastery:mastery,
-          badges:badges, points:state.points||0, streak:state.streak||0, date:dstr().replace(/-/g,'.')};
-}
-function rr(ctx,x,y,w,h,r){
-  ctx.beginPath(); ctx.moveTo(x+r,y);
-  ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
-  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
-}
-function drawPosterCanvas(d){
-  var W=600,H=880, dpr=2;
-  var cv=document.createElement('canvas');
-  cv.width=W*dpr; cv.height=H*dpr;
-  var ctx=cv.getContext('2d'); ctx.scale(dpr,dpr);
-
-  var g=ctx.createLinearGradient(0,0,0,H);
-  g.addColorStop(0,'#141A40'); g.addColorStop(0.45,'#0E1234'); g.addColorStop(1,'#0B0E26');
-  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-
-  var seed=20261030;
-  function rnd(){ seed=(seed*1103515245+12345)&0x7fffffff; return seed/0x7fffffff; }
-  for(var i=0;i<90;i++){
-    var x=rnd()*W,y=rnd()*H,rad=rnd()*1.6+0.4,a=rnd()*0.6+0.25;
-    ctx.beginPath(); ctx.arc(x,y,rad,0,Math.PI*2);
-    ctx.fillStyle='rgba(255,255,255,'+a.toFixed(2)+')'; ctx.fill();
-  }
-  var glow=ctx.createRadialGradient(W*0.5,H*0.26,10,W*0.5,H*0.26,330);
-  glow.addColorStop(0,'rgba(143,168,239,0.30)'); glow.addColorStop(1,'rgba(143,168,239,0)');
-  ctx.fillStyle=glow; ctx.fillRect(0,0,W,H*0.7);
-
-  ctx.textAlign='center';
-  ctx.fillStyle='#FFD27A'; ctx.font='bold 22px sans-serif';
-  ctx.fillText('薪 火 医 语',W/2,76);
-  ctx.fillStyle='rgba(232,236,248,0.66)'; ctx.font='13px sans-serif';
-  ctx.fillText('健康科普挑战 · 我的战绩',W/2,102);
-
-  ctx.fillStyle='#F2F5FF'; ctx.font='bold 20px sans-serif';
-  ctx.fillText(d.name,W/2,150);
-
-  ctx.fillStyle='#FFFFFF'; ctx.font='bold 92px sans-serif';
-  ctx.fillText(String(d.correct),W/2,272);
-  ctx.fillStyle='rgba(194,205,236,0.85)'; ctx.font='15px sans-serif';
-  ctx.fillText('道题答对',W/2,304);
-
-  var cols=[{k:'正确率',v:d.rate+'%'},{k:'累计答题',v:d.answered+'道'},{k:'板块徽章',v:d.badges+'枚'}];
-  var cw=W/3;
-  cols.forEach(function(c,i){
-    var cx=cw*i+cw/2;
-    ctx.fillStyle='rgba(255,255,255,0.06)'; rr(ctx,cw*i+16,344,cw-32,92,12); ctx.fill();
-    ctx.fillStyle='#FFD27A'; ctx.font='bold 26px sans-serif'; ctx.fillText(c.v,cx,388);
-    ctx.fillStyle='rgba(168,178,209,0.9)'; ctx.font='12px sans-serif'; ctx.fillText(c.k,cx,414);
-  });
-
-  var barX=60,barW=W-120,barY=480;
-  ctx.textAlign='left';
-  ctx.fillStyle='rgba(168,178,209,0.9)'; ctx.font='13px sans-serif';
-  ctx.fillText('知识掌握度 '+d.mastery+'%',barX,barY);
-  ctx.fillStyle='rgba(255,255,255,0.10)'; rr(ctx,barX,barY+14,barW,12,6); ctx.fill();
-  var bg=ctx.createLinearGradient(barX,0,barX+barW,0);
-  bg.addColorStop(0,'#8FA8EF'); bg.addColorStop(1,'#8B5CF6');
-  ctx.fillStyle=bg; rr(ctx,barX,barY+14,Math.max(14,barW*d.mastery/100),12,6); ctx.fill();
-
-  ctx.textAlign='center';
-  ctx.fillStyle='rgba(194,205,236,0.75)'; ctx.font='12px sans-serif';
-  ctx.fillText('累计积分 '+d.points+' · 打卡 '+totalCheckDays()+' 天',W/2,556);
-
-  ctx.strokeStyle='rgba(160,175,255,0.16)'; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo(60,592); ctx.lineTo(W-60,592); ctx.stroke();
-
-  ctx.fillStyle='rgba(255,255,255,0.06)'; rr(ctx,W/2-56,620,112,112,10); ctx.fill();
-  ctx.strokeStyle='rgba(160,175,255,0.28)'; ctx.stroke();
-  ctx.fillStyle='rgba(168,178,209,0.7)'; ctx.font='11px sans-serif';
-  ctx.fillText('小程序码',W/2,680);
-
-  ctx.fillStyle='rgba(232,236,248,0.9)'; ctx.font='13px sans-serif';
-  ctx.fillText('扫码一起学 · 每天 5 分钟健康科普',W/2,770);
-  ctx.fillStyle='rgba(124,136,172,0.8)'; ctx.font='11px sans-serif';
-  ctx.fillText(d.date,W/2,796);
-
-  return cv.toDataURL('image/png');
-}
-function openPoster(){
-  var d=posterData(), url=drawPosterCanvas(d);
-  var old=document.getElementById('posterMask'); if(old) old.remove();
-  var div=document.createElement('div');
-  div.id='posterMask'; div.className='poster-mask';
-  div.innerHTML='<div class="poster-box"><img src="'+url+'" alt="战绩海报">'
-    +'<div class="poster-tip">长按图片保存，或点下方按钮下载</div>'
-    +'<div class="poster-btns"><span class="btn-ghost" onclick="closePoster()">关闭</span>'
-    +'<a class="btn" href="'+url+'" download="薪火医语-我的战绩.png">下载图片</a></div></div>';
-  document.body.appendChild(div);
-  div.addEventListener('click',function(e){ if(e.target===div) closePoster(); });
-}
+/* v6.64：战绩海报已删除；下面这个关闭函数仍被「毕业证书」弹层复用。 */
 function closePoster(){ var m=document.getElementById('posterMask'); if(m) m.remove(); }
 
 function renderFun(){
@@ -30578,8 +30490,6 @@ function renderFun(){
     }
   }
 
-  html+='<div class="card"><div class="title">邀请好友一起学</div><div class="subtitle">分享海报，传递健康理念</div>'
-      +'<div class="btn" onclick="openPoster()">生成我的战绩海报</div></div>';
   html+='</div>';
   return html;
 }
@@ -33146,7 +33056,10 @@ function ckAdopt(raw){
 }
 
 function ckShowIn(v){
-  CK.showIn=!!v; CK.err=''; CK.msg='';
+  var cloud=(CK.status!=='nocloud');   /* 本机模式没有云端，不该开号码输入框 */
+  CK.showIn=!!v && cloud; CK.err=''; CK.msg='';
+  /* v6.64：三个展开态互斥，避免同一张卡里同时出现两个输入框 */
+  if(CK.showIn && typeof BK!=='undefined'){ BK.showOut=false; BK.showIn=false; }
   try{ render(); }catch(_){}
   if(v){ setTimeout(function(){ var el=document.getElementById('ckIn'); if(el) el.focus(); },60); }
 }
@@ -33166,52 +33079,44 @@ function ckCopy(){
   }
 }
 
-/* 我的页里的档案卡片 */
+/* ===== 我的页：数据备份与迁移（v6.64 合并）=====
+   原来「打卡档案」和「离线备份」是上下两块，按钮与说明各自讲一遍
+   「换手机怎么带走记录」，用户看到的是两套重复操作。
+   现在合成一张卡：一行状态 + 一组主按钮；三个展开态互斥，同一时刻只做一件事。
+   本机模式（FORCE_LOCAL）不显示号码与接入按钮，避免出现必然失败的入口。 */
 function ckCardHtml(){
   if(!ckValid(CK.code)) ckCodeInit();   /* 首帧渲染可能早于 ckBoot，先保证号码可用 */
   var n=Object.keys(state.checkins||{}).length;
-  var h='<div class="card ck-card"><div class="title" style="font-size:calc(16px * var(--fz))">打卡档案</div>';
-  h+='<div class="ck-note">一个号码对应一份记录。换手机或清缓存后，在新设备输入这个号码即可接回。</div>';
-  h+='<div class="ck-code" onclick="ckCopy()"><b>'+ckPretty(CK.code)+'</b><span>'+(CK.copied?'已复制':'复制')+'</span></div>';
-  h+='<div class="ck-line">本机 '+n+' 天 · '+(CK.status==='nocloud'?'云端未连接（本机模式）':('云端 '+CK.remoteCount+' 天'))
+  var cloud=(CK.status!=='nocloud');
+  var h='<div class="card ck-card"><div class="title" style="font-size:calc(16px * var(--fz))">数据备份与迁移</div>';
+  h+='<div class="ck-note">换手机或清缓存前，先在这里把记录带走；下面两种方式任选一种。</div>';
+  h+='<div class="ck-line">本机 '+n+' 天 · '+(cloud?('云端 '+CK.remoteCount+' 天'):'本机模式（无云端）')
       +(CK.lastSync?' · 上次同步 '+CK.lastSync:'')
-      +(CK.busy?' · 同步中':'')+'</div>';
-  if(CK.msg) h+='<div class="ck-tip">'+esc(CK.msg)+'</div>';
-  if(CK.err) h+='<div class="ck-err">'+esc(CK.err)+'。记录仍保存在本机，可用下面的「离线备份码」带走。</div>';
-  if(CK.status==='nocloud'){
-    /* v6.63：零依赖版本本来就没有云端，别再让用户去点必然失败的「同步 / 接入」按钮。
-       号码仍可作为本机档案编号展示，跨设备迁移统一交给离线备份码。 */
-    h+='<div class="ck-tip">当前为本机模式：号码只在这台设备有效，打卡会正常保存。'
-       +'换手机 / 清缓存，请用下面的「离线备份码」生成一段文字带走。</div>';
-  } else if(CK.showIn){
-    h+='<div class="ck-in"><input id="ckIn" placeholder="输入 12 位档案号" maxlength="17" onkeydown="ckEnter(event)" />'
-      +'<div class="btn" onclick="ckAdopt(document.getElementById(&#39;ckIn&#39;).value)">接入</div></div>';
-    h+='<div class="ck-tip">接入是把那份记录并进本机，之后仍用本机号码继续保存。'
-      +'<span class="ck-cancel" onclick="ckShowIn(false)">先不填，继续浏览</span></div>';
-  } else {
-    h+='<div class="ck-btns"><div class="btn-ghost" onclick="ckSync()">立即同步</div>'
-      +'<div class="btn-ghost" onclick="ckShowIn(true)">输入号码接入</div></div>';
-    h+='<div class="ck-tip">号码只保存在本机，建议截图留存；它相当于这份记录的钥匙，不必告诉别人。</div>';
+      +(CK.busy?' · 同步中':'')
+      +(cloud?'<span class="ck-sync" onclick="ckSync()">立即同步 ›</span>':'')+'</div>';
+  if(cloud){
+    h+='<div class="ck-num" onclick="ckCopy()">档案号 <b>'+ckPretty(CK.code)+'</b><span>'
+       +(CK.copied?'已复制':'复制')+'</span></div>';
   }
+  if(CK.msg) h+='<div class="ck-tip">'+esc(CK.msg)+'</div>';
+  if(CK.err) h+='<div class="ck-err">'+esc(CK.err)+'。记录仍保存在本机，用下面的备份码一样能带走。</div>';
+  if(!cloud) h+='<div class="ck-tip">当前为本机模式：打卡照常保存在这台设备，跨设备迁移请用备份码。</div>';
   h+=bkCardHtml();
   return h+'</div>';
 }
 
-/* ===== 备份区（离线也能带走数据）=====
-   放在打卡档案卡片里，因为两者回答的是同一个问题：我的记录能不能留住。
-   区别：档案号走云端、只存打卡；备份码是纯文本、离线可用、带全部数据。 */
+/* ===== 卡片里唯一的操作区 =====
+   展开态互斥：BK.showOut / BK.showIn / CK.showIn 同一时刻只开一个。 */
 function bkCardHtml(){
-  var n=Object.keys(state.checkins||{}).length;
+  var cloud=(CK.status!=='nocloud');
   var h='<div class="bk-box">';
-  h+='<div class="bk-t">离线备份（收藏 · 积分 · 打卡一起带走）</div>';
-  h+='<div class="bk-note">档案号只存打卡日期，还要联网。这里生成一段文本备份，'
-     +'把收藏、积分、答题和打卡一起带走，换设备粘贴回来即可恢复。</div>';
+  h+='<div class="bk-note">备份码把收藏、积分、答题和打卡一起带走，换设备粘贴回来即可恢复，不用联网。'
+     +(cloud?'档案号只同步打卡日期，联网时自动进行。':'')+'</div>';
   if(BK.err) h+='<div class="ck-err">'+esc(BK.err)+'</div>';
   if(BK.msg) h+='<div class="ck-tip">'+esc(BK.msg)+'</div>';
 
   if(BK.showOut){
-    /* v6.63：原来是不可编辑的 div，手机浏览器里 clipboard 复制失败就彻底拿不走。
-       改成只读文本框：可长按全选、可一键复制、可保存为文件，三条路都走得通。 */
+    /* v6.63：只读文本框，手机可长按全选；另有复制与保存为文件两条退路 */
     h+='<textarea class="bk-code bk-out" id="bkCode" readonly rows="4" onclick="this.select()">'+esc(BK.text)+'</textarea>';
     h+='<div class="bk-btns"><div class="btn" onclick="bkCopy()">'+(BK.copied?'已复制':'复制备份码')+'</div>'
       +'<div class="btn-ghost" onclick="bkDownload()">保存为文件</div>'
@@ -33223,9 +33128,17 @@ function bkCardHtml(){
     h+='<div class="bk-btns"><div class="btn" onclick="bkRestore(document.getElementById(&#39;bkIn&#39;).value)">恢复</div>'
       +'<div class="btn-ghost" onclick="bkToggle(\'in\',false)">取消</div></div>';
     h+='<div class="bk-tip">恢复是「合并」：打卡与收藏取并集，积分和成绩只取更好的那份，不会覆盖你现在已有的记录。</div>';
+  } else if(CK.showIn && cloud){
+    h+='<div class="ck-in"><input id="ckIn" placeholder="输入 12 位档案号" maxlength="17" onkeydown="ckEnter(event)" />'
+      +'<div class="btn" onclick="ckAdopt(document.getElementById(&#39;ckIn&#39;).value)">接入</div></div>';
+    h+='<div class="bk-btns"><div class="btn-ghost" onclick="ckShowIn(false)">取消，返回</div></div>';
+    h+='<div class="ck-tip">接入是把那份打卡记录并进本机；要带走全部数据，请返回后点「生成备份码」。</div>';
   } else {
-    h+='<div class="bk-btns"><div class="btn-ghost" onclick="bkExport()">生成备份码</div>'
-      +'<div class="btn-ghost" onclick="bkToggle(\'in\',true)">粘贴备份码恢复</div></div>';
+    /* 一组主按钮：两套方式共用，不再上下各摆一排 */
+    h+='<div class="bk-btns"><div class="btn" onclick="bkExport()">生成备份码</div>'
+      +'<div class="btn-ghost" onclick="bkToggle(\'in\',true)">粘贴恢复</div>'
+      +(cloud?'<div class="btn-ghost" onclick="ckShowIn(true)">号码接入</div>':'')
+      +'</div>';
   }
   return h+'</div>';
 }
@@ -33360,7 +33273,7 @@ function bkMerge(p){
 }
 
 function bkExport(){
-  BK.err=''; BK.msg='';
+  BK.err=''; BK.msg=''; CK.showIn=false;   /* v6.64：与档案号接入互斥 */
   try {
     BK.text = bkEncode();
     BK.showOut = true; BK.showIn = false;
@@ -33435,6 +33348,7 @@ function bkRestore(raw){
 function bkToggle(which, v){
   if(which==='out'){ BK.showOut=!!v; BK.showIn=false; }
   else { BK.showIn=!!v; BK.showOut=false; }
+  if(v) CK.showIn=false;                 /* v6.64：与档案号接入互斥 */
   BK.err=''; BK.msg='';
   try{ render(); }catch(_){}
 }
@@ -33459,7 +33373,7 @@ else setTimeout(ckBoot, 0);
 /* ===== 新手引导 =====
    开场给两个选项，对应两类人：
    · 新手  → 6 步，一个模块一步，讲清「这个模块能干什么、怎么点」；
-   · 老用户 → 直接落到「我的」，并把档案号输入框打开，输完就能接回连续打卡。
+   · 老用户 → 直接落到「我的」，并把接入输入框打开，输完就能接回连续打卡。
    只在首次自动弹（localStorage 记一笔）；之后任何时候都能从「我的 → 设置与隐私 → 新手引导」重看。
    引导打开期间把 3D 星图暂停（G.active=false），省电也省帧——它被盖住了，没必要继续画。 */
 (function () {
@@ -33521,17 +33435,17 @@ else setTimeout(ckBoot, 0);
         ['记录与收藏', '5 周打卡热力图、可搜索的收藏夹，还有日间 / 夜间切换。'],
         ['工具箱', '「家庭急救卡」可以生成一张长图，存进相册或打印出来贴冰箱。']
       ],
-      tip: '这一页最下面的「打卡档案」，就是下一步要讲的东西。'
+      tip: '这一页最下面的「数据备份与迁移」，就是下一步要讲的东西。'
     },
     {
       k: 'profile', ic: '🔑', title: '换手机，记录也不丢',
       items: [
-        ['一串号码 = 一份档案', '12 位档案号对应你的全部打卡日期，记录存在云端，而不是只躺在这台手机里。'],
-        ['怎么接回', '在新设备进「我的 → 打卡档案 → 输入号码接入」，旧记录会并进本机，号码不变。'],
-        ['请自己留存', '号码只保存在本机，相当于这把锁的钥匙；建议截图，别公开分享。']
+        ['备份码：一次带走全部', '在「我的 → 数据备份与迁移」生成一段文字，收藏、积分、答题和打卡一起带走，不用联网。'],
+        ['档案号：联网自动同步', '有云端时会自动生成 12 位号码并同步打卡日期；在新设备输号码就能接回。'],
+        ['请自己留存', '备份码和号码都只保存在本机，相当于这把锁的钥匙；建议存进备忘录，别公开分享。']
       ],
-      tip: '还没有号码？号码已经自动生成在「我的」里，直接截图存下就行。',
-      cta: '去填档案号',
+      tip: '两种方式都在同一张卡里：想带走全部数据用备份码，只想接回打卡用档案号。',
+      cta: '去接入旧记录',
       ctaFn: 'gdSkip()',
       alt: '先随便逛逛',
       altFn: 'gdClose()'
@@ -33556,7 +33470,7 @@ else setTimeout(ckBoot, 0);
       +   '<div class="gd-emblem"><svg class="em-svg" viewBox="0 0 200 200" role="img" aria-label="院庆徽记"><use href="#xhyyEmblem"></use></svg></div>'
       +   '<div class="gd-h1">欢迎来到薪火医语</div>'
       +   '<div class="gd-h2">六大板块的 3D 知识星图、AI 科普问答、医患情景演练与院史长廊，'
-      +     '还有一份能跟着你换手机走的打卡档案。</div>'
+      +     '还有一份能跟着你换手机走的学习档案。</div>'
       + '</div>'
       + '<div class="gd-pick">'
       +   '<div class="gd-opt primary" onclick="gdTour()">'
@@ -33567,8 +33481,8 @@ else setTimeout(ckBoot, 0);
       +   '</div>'
       +   '<div class="gd-opt" onclick="gdSkip()">'
       +     '<div class="gd-oi">🔑</div>'
-      +     '<div class="gd-om"><div class="gd-ot">跳过引导，直接填档案号</div>'
-      +       '<div class="gd-os">已有记录？到「我的」输入号码即可接回</div></div>'
+      +     '<div class="gd-om"><div class="gd-ot">跳过引导，接回旧记录</div>'
+      +       '<div class="gd-os">已有记录？到「我的 → 数据备份与迁移」粘贴备份码或输号码</div></div>'
       +     '<div class="gd-arrow">›</div>'
       +   '</div>'
       + '</div>'
@@ -33672,18 +33586,20 @@ else setTimeout(ckBoot, 0);
     if (goHome !== false && typeof goTab === 'function') goTab(GD.from || 'home');
   }
 
-  /* 跳过引导：落到「我的」，并把档案号输入框直接打开、滚到眼前 */
+  /* 跳过引导：落到「我的」，按当前模式打开对应的接回入口并滚到眼前。
+     v6.64：有云端 → 号码接入；本机模式 → 粘贴备份码恢复（号码在那版无效）。 */
   function skip() {
     markSeen();
     hide();
     if (typeof goTab === 'function') goTab('profile');
-    if (typeof ckShowIn === 'function') ckShowIn(true);   // 渲染是同步的，紧接着就能开输入框
+    if (typeof CK !== 'undefined' && CK.status !== 'nocloud' && typeof ckShowIn === 'function') ckShowIn(true);
+    else if (typeof bkToggle === 'function') bkToggle('in', true);
     setTimeout(function () {
       var card = document.querySelector('.ck-card');
       if (card && card.scrollIntoView) {
         try { card.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) { card.scrollIntoView(); }
       }
-      var inp = document.getElementById('ckIn');
+      var inp = document.getElementById('ckIn') || document.getElementById('bkIn');
       if (inp && inp.focus) { try { inp.focus(); } catch (e) {} }
     }, 120);
   }
