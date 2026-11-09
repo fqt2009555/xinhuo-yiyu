@@ -415,6 +415,9 @@
   .input { flex:1; background:var(--glass); border-radius:999px; padding:11px 14px; font-size:calc(13px * var(--fz)); border:1px solid var(--stroke-hi); outline:none; color:var(--text); }
   .send { background:linear-gradient(90deg,#5B8DEF,#8B5CF6); color:#fff; border-radius:999px; padding:11px 18px; font-size:calc(13px * var(--fz)); cursor:pointer; box-shadow:0 0 16px rgba(91,141,239,.30); }
   .hint { font-size:calc(11px * var(--fz)); text-align:center; margin-top:6px; color:var(--muted); }
+  /* v6.66：AI 互动页免责声明只在最下方保留一行橙色文字，不再跟随每条回复 */
+  .qa-disc { font-size:calc(11px * var(--fz)); text-align:center; line-height:1.6; margin:10px 0 4px; color:var(--glow-warm); opacity:.92; }
+  .phone.hc .qa-disc { color:#FFD9A0; }
   /* 新对话 & 轮数上限（v6.40） */
   /* v6.52：AI 模式开关胶囊。跟随主题，不再用固定的浅蓝底——
      固定浅色在夜间就是一块亮膏药，视觉权重压过了对话本身。 */
@@ -1603,7 +1606,7 @@
     <span id="navTitle">薪火医语</span>
     <!-- v6.48：版本号挪进顶栏右侧空白区。原来挂在 .phone 上 bottom:6px，
          正好压在底部标签栏的「我的」上（真机截图实测）。 -->
-    <span class="ver" title="构建标识">v6.65</span>
+    <span class="ver" title="构建标识">v6.66</span>
   </div>
 
   <div class="screen" id="screen"></div>
@@ -25337,12 +25340,15 @@ function renderQA(){
     var src=m.src?'<div class="qa-src">'+esc(m.src)+'</div>':'';
     /* 跳原文：文案写「相关原文」而不是「依据」——召回只按关键词匹配，不能声称是 AI 的作答依据 */
     var jump=m.jump?'<div class="qa-jump" onclick="openDetail(\''+escA(m.jump.type)+'\',\''+escA(m.jump.id)+'\')">📖 相关原文：《'+esc(m.jump.title)+'》 ›</div>':'';
-    return '<div class="msg '+m.role+'"><div class="bubble">'+esc(shown)+(m.streaming?'<span class="typing">▋</span>':'')+'</div>'+sp+'</div>'+jump+src+(m.disclaimer?'<div class="disclaimer">'+esc(m.disclaimer)+'</div>':'');
+    /* v6.66：免责声明不在对话里逐条出现，统一放到页面最底部一行橙色文字 */
+    return '<div class="msg '+m.role+'"><div class="bubble">'+esc(shown)+(m.streaming?'<span class="typing">▋</span>':'')+'</div>'+sp+'</div>'+jump+src;
   }).join('')+'</div>';
   /* 总结卡放在对话流下方：满轮时用户正停在页面底部，这里才看得见 */
   if(atLimit) html+=qaLimitBox();
   html+='<div class="input-bar"><input class="input" id="qaInput" placeholder="'+(atLimit?'已达本轮上限，请点「新对话」':'如：高血压怎么管理？')+'" '+(atLimit?'disabled style="opacity:.45"':'')+' value="'+esc(inputVal)+'" oninput="inputVal=this.value" onkeydown="if(event.key===\'Enter\')sendQA()"/><div class="send" onclick="sendQA()" '+(atLimit?'style="opacity:.45"':'')+'>发送</div></div>';
-  html+='<div class="hint" id="qaHint">'+esc(aiHintText())+'</div></div>';
+  html+='<div class="hint" id="qaHint">'+esc(aiHintText())+'</div>';
+  /* v6.66：免责声明只在页面最下方保留一行橙色文字，不再跟随每条 AI 回复 */
+  html+='<div class="qa-disc">'+esc(DISCLAIMER)+'</div></div>';
   return html;
 }
 function qaScroll(){ var sc=document.getElementById('screen'); if(sc) sc.scrollTop=sc.scrollHeight; }
@@ -26901,7 +26907,7 @@ function timeoutWrong(){
 }
 
 /* 版本号：显示在「我的」页底部，用来确认手机上打开的是不是最新版（缓存排查用） */
-var APP_VER='v6.65';
+var APP_VER='v6.66';
 /* 右下角构建标识跟着版本号走：以前写死在 HTML 里，升版会忘了改，截图对不上号 */
 (function(){
   function sync(){ var el=document.querySelector('.ver'); if(el) el.textContent=APP_VER; }
