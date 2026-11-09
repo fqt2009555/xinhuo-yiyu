@@ -1276,38 +1276,6 @@
   border-radius:12px; border:1px solid rgba(255,255,255,.14); background:#FFFDF9; }
 .phone.day .aid-img { border-color:rgba(28,40,80,.12); }
 
-/* 带教视角（详情页） */
-.tc-box { margin-top:16px; padding:13px 14px 12px; border-radius:14px;
-  background:linear-gradient(165deg, rgba(58,92,130,.20), rgba(38,48,88,.12));
-  border:1px solid rgba(140,190,230,.26); }
-.tc-hd { display:flex; align-items:center; gap:7px; font-size:calc(13.5px * var(--fz)); font-weight:700;
-  color:#cfe3ff; margin-bottom:10px; }
-.tc-ic { font-size:calc(15px * var(--fz)); }
-.tc-n { margin-left:auto; font-size:calc(10.5px * var(--fz)); font-weight:400; color:rgba(200,215,240,.62); }
-.tc-row { display:flex; gap:9px; margin-bottom:8px; font-size:calc(12.5px * var(--fz)); line-height:1.7; }
-.tc-row b { flex:0 0 58px; color:#9fc6ee; font-weight:600; }
-.tc-row span { flex:1; min-width:0; color:var(--text-sub); text-wrap:pretty; }
-.tc-btn { margin-top:5px; text-align:center; font-size:calc(12.5px * var(--fz)); padding:9px; border-radius:10px;
-  color:#0f2033; font-weight:700; cursor:pointer;
-  background:linear-gradient(90deg,#a8d4ff,#7fb2f0); }
-.tc-btn:active { filter:brightness(1.08); }
-.tc-step { margin-bottom:12px; padding:11px 13px; border-radius:12px; background:rgba(255,255,255,.05); }
-.tc-k { font-size:calc(11.5px * var(--fz)); color:#ffd27a; letter-spacing:.04em; margin-bottom:5px; }
-.tc-v { font-size:calc(13px * var(--fz)); line-height:1.72; color:var(--text); }
-.tc-v b { color:#cfe3ff; font-weight:600; }
-.tc-hint { margin-top:6px; font-size:calc(11.5px * var(--fz)); color:var(--text-sub); }
-
-.phone.day .tc-box { background:linear-gradient(165deg, rgba(70,130,200,.08), rgba(70,130,200,.03));
-  border-color:rgba(40,110,190,.22); }
-.phone.day .tc-hd { color:#1E4E7E; }
-.phone.day .tc-n { color:#6B7A96; }
-.phone.day .tc-row b { color:#2B6CA8; }
-.phone.day .tc-row span { color:#44506B; }
-.phone.day .tc-btn { color:#fff; background:linear-gradient(90deg,#5B9BE0,#3F7FC9); }
-.phone.day .tc-step { background:rgba(28,40,80,.045); }
-.phone.day .tc-k { color:#A2701A; }
-.phone.day .tc-v b { color:#1E4E7E; }
-
 /* 薪火对照（院史页）：那时 / 今天 两条并列
    v6.52：原来年份、正文、入口按钮是三列 flex——年份列固定 70px 却只放得下
    「1939」四个数字，右边的「看 CPR ›」又占掉一截，正文实际只剩一半宽度，
@@ -1370,30 +1338,9 @@
 .cmp-x { font-size:calc(10.5px * var(--fz)); color: rgba(255,210,122,.62); margin-left: 6px; font-weight: 400; }
 .cmp-src { font-size:calc(10px * var(--fz)); color: var(--muted); line-height: 1.6; margin-top: 9px; padding-top: 9px; border-top: 1px solid rgba(255,180,120,.16); }
 
-/* ===== 打卡档案卡片（我的页） ===== */
-.ck-card .ck-code { display: flex; align-items: center; gap: 8px; margin: 9px 0 5px; padding: 9px 12px;
-  border: 1px solid rgba(255,210,122,.22); border-radius: 10px; background: rgba(255,210,122,.06); cursor: pointer; }
-.ck-card .ck-code b { flex: 1; font-size:calc(14.5px * var(--fz)); font-weight: 700; letter-spacing: .10em; color: #FFD27A;
-  font-family: ui-monospace, Menlo, Consolas, monospace; }
-.ck-card .ck-code span { font-size:calc(11px * var(--fz)); color: rgba(255,210,122,.78); white-space: nowrap; }
-.ck-card .ck-in { display: flex; gap: 8px; margin-top: 9px; }
-.ck-card .ck-in input { flex: 1; min-width: 0; padding: 9px 11px; font-size:calc(13px * var(--fz)); letter-spacing: .06em;
-  color: #FFF0D8; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.14);
-  border-radius: 9px; font-family: ui-monospace, Menlo, Consolas, monospace; text-transform: uppercase; }
-.ck-card .ck-in input::placeholder { color: rgba(216,189,168,.45); }
-.ck-card .ck-in .btn { flex: 0 0 auto; padding: 9px 14px; font-size:calc(12.5px * var(--fz)); }
+/* ===== 数据备份与迁移卡片（我的页 · v6.65） ===== */
 .ck-card .ck-line { font-size:calc(13px * var(--fz)); color: #e8d7c6; margin: 8px 0 2px; }
 .ck-card .ck-line b { color: #FFD27A; font-weight: 700; }
-  /* v6.64：档案号与备份码合卡后，号码压缩成状态行旁的一行小字，
-     同步入口也收进状态行，不再各自占一块。 */
-  .ck-card .ck-sync { margin-left: 6px; color: #FFD27A; cursor: pointer;
-    text-decoration: underline; text-underline-offset: 2px; }
-  .ck-card .ck-num { display: flex; align-items: center; gap: 8px; margin-top: 7px;
-    font-size:calc(11.5px * var(--fz)); color: var(--muted); cursor: pointer; }
-  .ck-card .ck-num b { flex: 1; font-family: ui-monospace, Menlo, Consolas, monospace;
-    font-size:calc(12.5px * var(--fz)); letter-spacing: .08em; color: #FFD27A; }
-  .ck-card .ck-num span { color: rgba(255,210,122,.78); white-space: nowrap; }
-  .phone.day .ck-card .ck-num b, .phone.day .ck-card .ck-sync { color: #7E5F1C; }
 .ck-card .ck-note { font-size:calc(11.5px * var(--fz)); line-height: 1.6; color: var(--muted); margin-bottom: 6px; }
 .ck-card .ck-tip { font-size:calc(11px * var(--fz)); line-height: 1.55; color: #9fb0a8; background: rgba(120,220,180,.06);
   border-left: 2px solid rgba(120,220,180,.45); padding: 7px 10px; border-radius: 0 8px 8px 0; margin-top: 8px; }
@@ -1631,8 +1578,8 @@
       if (settled) return;
       settled = true; clearTimeout(timer);
       /* v6.63：云 SDK 是异步注入的，DOMContentLoaded 时往往还没到。
-         首次 initAI / ckBoot 已经跑过，必须在这里再触发一次，
-         否则 AI 一直停在「正在连接」、打卡档案一直显示 nocloud。 */
+         首次 initAI 已经跑过，必须在这里再触发一次，否则 AI 一直停在「正在连接」。
+         v6.65：ckSync 已停用，保留调用只为不改动这条初始化链路。 */
       if (window.initAI) window.initAI();
       if (window.ckSync) window.ckSync();
     };
@@ -1656,7 +1603,7 @@
     <span id="navTitle">薪火医语</span>
     <!-- v6.48：版本号挪进顶栏右侧空白区。原来挂在 .phone 上 bottom:6px，
          正好压在底部标签栏的「我的」上（真机截图实测）。 -->
-    <span class="ver" title="构建标识">v6.64</span>
+    <span class="ver" title="构建标识">v6.65</span>
   </div>
 
   <div class="screen" id="screen"></div>
@@ -26954,7 +26901,7 @@ function timeoutWrong(){
 }
 
 /* 版本号：显示在「我的」页底部，用来确认手机上打开的是不是最新版（缓存排查用） */
-var APP_VER='v6.64';
+var APP_VER='v6.65';
 /* 右下角构建标识跟着版本号走：以前写死在 HTML 里，升版会忘了改，截图对不上号 */
 (function(){
   function sync(){ var el=document.querySelector('.ver'); if(el) el.textContent=APP_VER; }
@@ -30723,8 +30670,8 @@ var HIST_LINK = [
     now:'一边看病、一边教人少生病——今天的辟谣',
     t:'a', id:'P3-4', go:'看辟谣' },
   { y:'1938–1946', old:'汉中八年，带教培养学生 205 人',
-    now:'今天的规培与床旁教学：三行教学点 + 5 分钟教学卡',
-    t:'t', id:'P1-6', go:'看带教' }
+    now:'今天的规培与床旁教学：先把急救要点讲清、把误区点破',
+    t:'a', id:'P1-6', go:'看急救' }
 ];
 
 /* ===== 那年今日（v6.37） =====
@@ -30771,7 +30718,7 @@ function renderHistory(){
   html+='<div class="card"><div class="title" style="font-size:calc(16px * var(--fz))">一条脉络：那时怎么做，今天怎么讲</div>'
       + '<div class="muted" style="font-size:calc(11.5px * var(--fz));margin:3px 0 10px">左边都出自本院院史原文，右边点开就是今天对应的那一篇。</div>'
       + HIST_LINK.map(function(c){
-          var act = c.t==='t' ? ('openTeachCard(\''+c.id+'\')') : ('openDetail(\'article\',\''+c.id+'\')');
+          var act = 'openDetail(\'article\',\''+c.id+'\')';
           return '<div class="hl-row" onclick="'+act+'">'
             + '<div class="hl-top"><span class="hl-y">'+esc(c.y)+'</span>'
             + '<span class="hl-go">'+esc(c.go)+' ›</span></div>'
@@ -31029,8 +30976,6 @@ function openDetail(type,id){
   }
   if(item.summary) body+='<div class="muted d-sum">'+esc(item.summary)+'</div>';
   body+='<div class="d-body">'+esc(item.text)+'</div>';
-  /* 带教视角：只对写了教学点的条目出现，没写的就不硬凑（宁缺勿滥） */
-  if(type==='article' && typeof teachHtml==='function') body+=teachHtml(item);
   if(type==='article') body+='<div class="disclaimer">'+esc(item.disclaimer||DISCLAIMER)+'</div>';
   body+='</div>';
   if(type==='article') body+='<div class="acts"><div class="btn-ghost fav '+(faved?'on':'')+'" id="favBtn" onclick="toggleFav()">'+(faved?'★ 已收藏':'☆ 收藏')+'</div></div>';
@@ -32719,399 +32664,41 @@ function aidShareFallback(text, e){
   }
 }
 
-/* ===== 带教视角：给「AI 赋能医学教育」一个落点 =====
-   这个作品的受众写的是市民，但赛道是医学教育、评审单位是教务部。
-   补法不是硬塞一门课，而是在每条高频科普后面加三行「教的人怎么用」：
-     教学要点（该讲清什么）、常见误区（学员最容易错在哪）、可提问的点（怎么问出来）。
-   只写自己读过原文、讲得准的 20 条；没写的条目不出这块——宁缺勿滥。 */
-var TEACH = {
-  'P1-6': {
-    p: '判断与按压是两件事：判断不超过 10 秒，按压 5—6 厘米、100—120 次/分、30:2。',
-    w: '怕压断肋骨而手软；换人、取 AED 时让按压长时间中断。',
-    q: '为什么要求胸廓「完全回弹」？回弹不充分会让哪一步的血流减少？'
-  },
-  'P1-1': {
-    p: '先分「能咳」与「不能咳」：能咳只鼓励咳，不能咳才做腹部冲击，拳眼在脐上两横指。',
-    w: '一有呛咳就冲击；用手抠、喂水；孕晚期与明显肥胖者仍做腹部冲击。',
-    q: '患者突然软倒、失去反应，你的下一个动作是什么？为什么不是继续冲击？'
-  },
-  'P1-11': {
-    p: 'FAST 四项任一异常即拨 120；要记的是「最后正常的时间」，它决定还能不能溶栓。',
-    w: '想等等看会不会自己好；先喂阿司匹林或降压药。',
-    q: '为什么不能先给阿司匹林？「出血性与缺血性处理相反」意味着什么？'
-  },
-  'P1-19': {
-    p: '第一动作是冲：15—25℃ 流动水 15—20 分钟；面积用患者本人手掌估，不用别人的手。',
-    w: '涂牙膏、酱油、香灰；冰块直接敷；自己挑破水疱。',
-    q: '为什么强调「不是冰水」？大面积冲凉时低体温风险在哪些人身上更突出？'
-  },
-  'P2-9': {
-    p: '非特异性腰痛 1—2 周多可缓解，动比躺好；关键动作是识别「红线」症状。',
-    w: '一痛就长期卧床；把腿麻、大小便障碍当成普通「闪了腰」。',
-    q: '哪几个症状一出现，就必须停止观察、尽快就医？'
-  },
-  'P2-10': {
-    p: '屈膝下蹲、物体贴身、用腿发力；转身先动脚再动腰，不要原地拧。',
-    w: '直腿弯腰搬；把护腰带当长期护具代替锻炼。',
-    q: '为什么护腰带不能长期戴？肌肉「偷懒」之后会发生什么？'
-  },
-  'P2-2': {
-    p: '眨眼从每分钟 15—20 次降到 5—7 次，是屏幕相关干眼的核心机制。',
-    w: '长期用「去红血丝」眼药水；戴隐形眼镜不摘就滴。',
-    q: '去红血丝的眼药水为什么越用越红？它作用在哪个环节？'
-  },
-  'P2-7': {
-    p: '每坐 1 小时起身 3—5 分钟；拉伸以 15 秒、有牵拉感但不痛为度。',
-    w: '把拉伸当成运动的全部，忽略每周 150 分钟中等强度有氧。',
-    q: '只做拉伸不做有氧，能抵消久坐的危害吗？为什么？'
-  },
-  'P3-4': {
-    p: '退热的目标是「让人舒服」，不是把数字压下去；38.5℃ 或明显不适才考虑退热药。',
-    w: '捂汗退烧；婴幼儿捂热，可诱发高热惊厥甚至捂热综合征。',
-    q: '为什么同样的捂汗，婴幼儿的风险比成人高得多？'
-  },
-  'P3-3': {
-    p: '停止吞咽、轻咳；看得见且位置浅才用镊子夹，否则到耳鼻喉科做喉镜。',
-    w: '吞饭团往下带、喝醋泡软；以为「咽下去了就没事」。',
-    q: '食管异物为什么会致命？它紧邻哪个结构？'
-  },
-  'P3-7': {
-    p: '骨钙难溶于水：一碗汤的钙只有几毫克到十几毫克，100 毫升牛奶约 100 毫克。',
-    w: '汤越白越有营养；痛风、高尿酸人群长期喝汤。',
-    q: '汤色乳白是什么造成的？这个现象能说明钙含量高吗？'
-  },
-  'P3-1': {
-    p: '坐位、身体前倾、捏鼻翼软处持续 10—15 分钟不松手；中途不要反复松开看。',
-    w: '仰头、举对侧手臂；捏鼻梁硬骨而不是鼻翼。',
-    q: '仰头时血去了哪里？为什么孩子会出现黑便？'
-  },
-  'P4-1': {
-    p: '按「系统 + 急缓」两条轴定位科室；持续胸痛不缓解直接去急诊胸痛中心。',
-    w: '凭感觉直接挂专家号；育龄女性下腹痛漏掉妇科与妊娠可能。',
-    q: '一位育龄女性右下腹痛伴停经，你会把她分到哪个科？为什么？'
-  },
-  'P4-3': {
-    p: '三要素：最难受的是什么、已经做过什么处理、背景（既往史 / 用药 / 过敏 / 月经）。',
-    w: '从头讲起讲不到重点；漏掉在服药物与过敏史。',
-    q: '为什么「吃了两天胃药没缓解」比「我很难受」更有信息量？'
-  },
-  'P4-5': {
-    p: '先看参考区间；有箭头不等于有病；动态趋势比单次结果更重要。',
-    w: '拿外院参考区间直接对比；一项异常就给自己下诊断。',
-    q: '同一指标两家医院结果不同，可能的原因有哪些？'
-  },
-  'P4-10': {
-    p: '要命的走急诊，不要命的走门诊；急诊按病情分级叫号，不是先来先看。',
-    w: '轻症挤急诊；夜间硬等门诊；拿不准时反而不敢去急诊。',
-    q: '为什么急诊「后来的先看」是合理的？分级的依据是什么？'
-  },
-  'P5-2': {
-    p: '腹式呼吸 4 秒吸 / 6 秒呼；4-7-8 屏息不适就缩短，心血管病人以慢吸慢呼为主。',
-    w: '屏息硬撑；把放松练习当成治疗的替代品。',
-    q: '延长呼气为什么能让身体从「警报状态」里降下来？'
-  },
-  'P5-4': {
-    p: '三栏：事件（客观）/ 当时的想法（原话）/ 更平衡的说法（找证据）。',
-    w: '把想法当事实；写成情绪宣泄，而不是可回看的记录。',
-    q: '「我肯定搞砸了」属于哪种思维习惯？支持与反对它的证据各有哪些？'
-  },
-  'P5-6': {
-    p: '可控感来自准备：资料、流程、问题清单，三样齐了焦虑就降一半。',
-    w: '反复刷检查结果；把就医焦虑当成「自己不够坚强」。',
-    q: '候诊时做什么最能降低失控感？为什么不是「别想太多」？'
-  },
-  'P5-13': {
-    p: '5-4-3-2-1：五种看得见、四种摸得到、三种听得到、两种闻得到、一种尝得到。',
-    w: '等发作了才第一次用；只默念数字，不真的去看、去听。',
-    q: '这个技术为什么强调「提前练」？不练会缺哪一步？'
-  }
-};
-
-function teachHtml(a){
-  var t = TEACH[a.id];
-  if (!t) return '';
-  return '<div class="tc-box">'
-    + '<div class="tc-hd"><span class="tc-ic">🎓</span>带教视角<span class="tc-n">规培 / 住院医师 / 护理带教</span></div>'
-    + '<div class="tc-row"><b>教学要点</b><span>' + esc(t.p) + '</span></div>'
-    + '<div class="tc-row"><b>常见误区</b><span>' + esc(t.w) + '</span></div>'
-    + '<div class="tc-row"><b>可提问</b><span>' + esc(t.q) + '</span></div>'
-    + '<div class="tc-btn" onclick="openTeachCard(\'' + a.id + '\')">生成 5 分钟床旁教学卡 ›</div>'
-    + '</div>';
-}
-
-/* 床旁教学卡：把上面三行摊成一段能照着念的流程，不需要投影、不需要换场地 */
-window.openTeachCard = function(id){
-  var a = findArt(id), t = TEACH[id];
-  if (!a || !t) return;
-  if (window.spHaltAll) window.spHaltAll();
-  var h = '<div class="card tc-card">'
-    + '<span class="tag">床旁教学 · 5 分钟</span>'
-    + '<div class="d-head"><div class="d-title">' + esc(a.title) + '</div></div>'
-    + '<div class="muted d-sum">一人讲、一人听，站在床边就能走完一轮。不占场地，不需要准备投影。</div>'
-    + '<div class="tc-step"><div class="tc-k">1 · 点题　30 秒</div>'
-    +   '<div class="tc-v">先给结论，再讲理由：<b>' + esc(t.p) + '</b></div></div>'
-    + '<div class="tc-step"><div class="tc-k">2 · 先问　2 分钟</div>'
-    +   '<div class="tc-v">不要先讲，先把问题抛出去：<b>' + esc(t.q) + '</b>'
-    +   '<div class="tc-hint">让学员先答，答错的地方才是今天真正要讲的部分。</div></div></div>'
-    + '<div class="tc-step"><div class="tc-k">3 · 纠错　1.5 分钟</div>'
-    +   '<div class="tc-v">专门讲最容易错的一步：<b>' + esc(t.w) + '</b></div></div>'
-    + '<div class="tc-step"><div class="tc-k">4 · 收口　1 分钟</div>'
-    +   '<div class="tc-v">让学员用自己的话复述一遍；说不顺的地方，就是回去要补的地方。</div></div>'
-    + '<div class="qk-src">原文与依据见本条科普，教学口径与正文一致。</div>'
-    + '<div class="qk-acts"><div class="btn" onclick="openDetail(\'article\',\'' + a.id + '\')">回到原文</div>'
-    +   '<div class="btn-ghost" onclick="closeDetail()">关闭</div></div>'
-    + '<div class="disclaimer">' + esc(DISCLAIMER) + '</div></div>';
-  document.getElementById('ovTitle').textContent = '床旁教学卡';
-  var ob = document.getElementById('ovBody');
-  ob.innerHTML = h; ob.scrollTop = 0;
-  document.getElementById('overlay').classList.add('show');
-};
+/* v6.65：「带教视角 / 床旁教学卡」整块下线。
+   TEACH 数据、详情页挂载、教学卡弹层与相关 CSS 一并删除；
+   院史页「一条脉络」第三条改为普通文章链接，不留死链。 */
 </script>
 <script>
-/* ===== 打卡档案码：不登录也能把记录带走 =====
-   一份记录对应一个号码。号码既是标识也是钥匙——服务端只认号码，不认人，
-   所以不需要账号、不需要授权跳转，打开就能用。
+/* ===== v6.65：12 位号码与云端打卡同步已下线 =====
+   原「号码 + 云端」只同步打卡日期、还要联网，和「一次带走全部数据、
+   不用联网」的离线备份码重复，按用户要求整体删除：
+   不再生成号码、不再读写云端 checkins 表、界面不再出现号码与同步入口。
+   下面保留 CK 状态对象与三个空入口，仅为了不改动既有调用链：
+     · 云 SDK onload 会调 ckSync()（v6.63 的 AI 竞态修复链路）；
+     · 打卡流程会调 ckPushDay()；
+     · ckBoot() 保留 SDK 晚到重试结构，保证 AI 初始化时序不变。
+   三者都不发起任何网络请求；实时 AI 问答由 initAI() 独立负责。 */
+var CK = { status:'nocloud', booted:false, showIn:false };
 
-   数据仍是一天一行：本机先写，离线可用；联网后与云端取并集，再把本机独有的日期回推。
-   并集幂等且可交换，两台设备先后打卡不需要任何冲突解决，这也是当初不存「连续天数」的原因。
+function ckSync(){ CK.status='nocloud'; return; }   /* 停用：仅保留入口 */
+function ckPushDay(){ return; }                     /* 停用：仅保留入口 */
 
-   安全边界（服务端，见 README 第二十六章）：
-     · public.checkins 已收回 anon / authenticated 的全部权限，直接查表读不到任何行；
-     · 只开放三个 SECURITY DEFINER 函数，按号码精确取写，拿不到整表；
-     · 号码 12 位取自 32 字符表（约 60 bit 随机），枚举不可行。 */
-var CK = { cloud:null, code:'', status:'idle', lastSync:'', err:'', msg:'', busy:false,
-           remoteCount:0, booted:false, showIn:false, copied:false };
-
-/* 32 个字符，去掉数字 0 与字母 O、I（以及数字 1）——它们在表里都没有近似字形，
-   手抄、口述、截图识别都不容易混。 */
-var CK_ALPHA = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
-
-function ckHM(){ var d=new Date(); return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
-function ckDay(v){ return String(v||'').slice(0,10); }
-
-/* 号码归一化：去掉连字符与空格并转大写。存储、比较、传参都用归一化形式。 */
-function ckNorm(v){ return String(v||'').toUpperCase().replace(/[^0-9A-Z]/g,''); }
-function ckValid(v){ return /^[23456789A-HJ-NP-Z]{12}$/.test(ckNorm(v)); }
-/* 展示形式：XXXX-XXXX-XXXX */
-function ckPretty(code){
-  var c=ckNorm(code);
-  return c.length===12 ? (c.slice(0,4)+'-'+c.slice(4,8)+'-'+c.slice(8,12)) : (c||'');
-}
-
-function ckGen(){
-  var out='', i;
-  if(window.crypto && crypto.getRandomValues){
-    var buf=new Uint8Array(12); crypto.getRandomValues(buf);
-    for(i=0;i<12;i++) out+=CK_ALPHA[buf[i] & 31];     /* 32 个字符，字节取低 5 位是均匀的 */
-  } else {
-    for(i=0;i<12;i++) out+=CK_ALPHA[Math.floor(Math.random()*32)];
-  }
-  return out;
-}
-
-/* 本机号码一旦生成就不再变：接入别人的记录是「复制并入」，不是「换号」，
-   这样不会把自己的打卡写到别人的档案下。 */
-function ckCodeInit(){
-  var c='';
-  try{ c=localStorage.getItem('xfyy:ck')||''; }catch(e){}
-  c=ckNorm(c);
-  if(!ckValid(c)){
-    c=ckGen();
-    try{ localStorage.setItem('xfyy:ck', c); }catch(e){}
-  }
-  CK.code=c;
-  return c;
-}
-
-function ckCloud(){
-  if(CK.cloud) return CK.cloud;
-  if(typeof WorkBuddyCloud==='undefined' || !WorkBuddyCloud.createWorkBuddyCloud) return null;
-  CK.cloud = WorkBuddyCloud.createWorkBuddyCloud({
-    endpoint:AI_PUBLIC.endpoint, oauthRelayBaseUrl:AI_PUBLIC.oauthRelayBaseUrl, publishableKey:AI_PUBLIC.publishableKey
-  });
-  return CK.cloud;
-}
-
-/* 纯逻辑：把云端返回的日期并入本机集合，返回「本机有、云端没有」需要回推的日期。
-   单测直接覆盖这个函数——它是整套同步唯一容易出错的地方。 */
-function ckApplyRemote(remoteDays){
-  var remote={}, self=state.checkins||{};
-  (remoteDays||[]).forEach(function(d){ var k=ckDay(d); if(k) remote[k]=1; });
-  var push=[];
-  Object.keys(self).forEach(function(k){ if(!remote[k]) push.push(k); });
-  Object.keys(remote).forEach(function(k){ self[k]=1; });
-  state.checkins=self;
-  state.streak=streakOf();
-  CK.remoteCount=Object.keys(remote).length;
-  return push.sort();
-}
-
-/* 按号码取：走 SECURITY DEFINER 函数，服务端只返回该号码的行。 */
-function ckFetch(code){
-  var c=ckCloud();
-  if(!c) return Promise.reject(new Error('云端组件未加载'));
-  return Promise.resolve(c.database.rpc('ck_fetch',{ p_code: ckNorm(code) })).then(function(r){
-    if(r && r.error) throw r.error;
-    var list=(r && r.data) || [];
-    return list.map(function(x){ return typeof x==='string' ? x : (x && x.day); }).filter(Boolean);
-  });
-}
-
-/* 单日写入（打卡时用，语义最直白） */
-function ckMark(day, code){
-  var c=ckCloud();
-  if(!c) return Promise.reject(new Error('云端组件未加载'));
-  return Promise.resolve(c.database.rpc('ck_mark',{ p_code: ckNorm(code||CK.code), p_day: ckDay(day) })).then(function(r){
-    if(r && r.error) throw r.error;
-  });
-}
-
-/* 批量写入：首次上云或接入后整表回推，一次往返而不是逐天调用 */
-function ckMarkAll(days, code){
-  var c=ckCloud();
-  if(!c || !days || !days.length) return Promise.resolve();
-  return Promise.resolve(c.database.rpc('ck_mark_many',{ p_code: ckNorm(code||CK.code), p_days: days })).then(function(r){
-    if(r && r.error) throw r.error;
-  });
-}
-
-function ckSync(){
-  var c=ckCloud();
-  if(!c){ CK.status='nocloud'; return; }
-  if(CK.busy) return;
-  if(!ckValid(CK.code)) ckCodeInit();
-  CK.busy=true; CK.err=''; CK.msg='';
-  ckFetch(CK.code)
-    .then(function(days){
-      var push=ckApplyRemote(days);
-      CK.status='ok'; CK.lastSync=ckHM();
-      save(); render();
-      return ckMarkAll(push, CK.code);
-    })
-    .then(function(){ CK.busy=false; save(); render(); })
-    .catch(function(e){
-      CK.busy=false; CK.status='error';
-      CK.err=(e && (e.message||e.hint)) || '同步失败，稍后再试';
-      try{ render(); }catch(_){}
-    });
-}
-
-/* 打卡后只推当天，不必整表重拉 */
-function ckPushDay(day){
-  if(!CK.booted) return;                 /* 还没初始化完，交给 ckSync 统一回推 */
-  if(!ckValid(CK.code)) return;
-  ckMark(day).then(function(){
-    CK.status='ok'; CK.lastSync=ckHM();
-    var n=Object.keys(state.checkins||{}).length;
-    if(CK.remoteCount<n) CK.remoteCount=n;
-    try{ render(); }catch(_){}
-  }).catch(function(e){
-    CK.status='error'; CK.err=(e && e.message) || '今日记录尚未上传';
-    try{ render(); }catch(_){}
-  });
-}
-
-/* 接入另一份记录：把该号码下的日期并进本机，然后整表回推到自己的号码。
-   号码不变——记录从此归入本机档案，避免误写到别人名下。 */
-function ckAdopt(raw){
-  var code=ckNorm(raw);
-  CK.msg=''; CK.err='';
-  if(!ckValid(code)){
-    CK.err='号码应为 12 位字母或数字（不含 0 O 1 I），请检查后重试';
-    try{ render(); }catch(_){}
-    return;
-  }
-  if(code===ckNorm(CK.code)){
-    CK.msg='这就是本机当前的号码';
-    try{ render(); }catch(_){}
-    return;
-  }
-  var c=ckCloud();
-  if(!c){ CK.err='云端组件未加载，请检查网络后重试'; try{ render(); }catch(_){} return; }
-  CK.busy=true; CK.showIn=false; try{ render(); }catch(_){}
-  ckFetch(code)
-    .then(function(days){
-      if(!days || !days.length){
-        CK.busy=false;
-        CK.err='这个号码下没有记录，请确认没有输错';
-        try{ render(); }catch(_){}
-        return null;
-      }
-      var before=Object.keys(state.checkins||{}).length;
-      ckApplyRemote(days);
-      var added=Object.keys(state.checkins||{}).length-before;
-      save();
-      return ckMarkAll(Object.keys(state.checkins||{}), CK.code).then(function(){
-        CK.busy=false; CK.status='ok'; CK.lastSync=ckHM();
-        CK.remoteCount=Object.keys(state.checkins||{}).length;
-        CK.msg='已接入 '+days.length+' 天，其中 '+added+' 天是本机原来没有的';
-        save(); render();
-      });
-    })
-    .catch(function(e){
-      CK.busy=false;
-      CK.err=(e && (e.message||e.hint)) || '接入失败，请稍后再试';
-      try{ render(); }catch(_){}
-    });
-}
-
-function ckShowIn(v){
-  var cloud=(CK.status!=='nocloud');   /* 本机模式没有云端，不该开号码输入框 */
-  CK.showIn=!!v && cloud; CK.err=''; CK.msg='';
-  /* v6.64：三个展开态互斥，避免同一张卡里同时出现两个输入框 */
-  if(CK.showIn && typeof BK!=='undefined'){ BK.showOut=false; BK.showIn=false; }
-  try{ render(); }catch(_){}
-  if(v){ setTimeout(function(){ var el=document.getElementById('ckIn'); if(el) el.focus(); },60); }
-}
-
-function ckEnter(e){ if(e && e.key==='Enter'){ var el=document.getElementById('ckIn'); if(el) ckAdopt(el.value); } }
-
-function ckCopy(){
-  var t=ckNorm(CK.code);
-  var done=function(){ CK.copied=true; try{render();}catch(_){}
-    setTimeout(function(){ CK.copied=false; try{render();}catch(_){} },1500); };
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(t).then(done, function(){
-      CK.msg='号码：'+ckPretty(t)+'（长按手动复制）'; try{ render(); }catch(_){}
-    });
-  } else {
-    CK.msg='号码：'+ckPretty(t)+'（长按手动复制）'; try{ render(); }catch(_){}
-  }
-}
-
-/* ===== 我的页：数据备份与迁移（v6.64 合并）=====
-   原来「打卡档案」和「离线备份」是上下两块，按钮与说明各自讲一遍
-   「换手机怎么带走记录」，用户看到的是两套重复操作。
-   现在合成一张卡：一行状态 + 一组主按钮；三个展开态互斥，同一时刻只做一件事。
-   本机模式（FORCE_LOCAL）不显示号码与接入按钮，避免出现必然失败的入口。 */
+/* ===== 我的页：数据备份与迁移（v6.65 · 只留离线备份码）=====
+   换手机、清缓存前生成一段备份码，新设备粘贴回来即可恢复；
+   不用登录、不用联网，收藏 / 积分 / 答题 / 打卡一起带走。 */
 function ckCardHtml(){
-  if(!ckValid(CK.code)) ckCodeInit();   /* 首帧渲染可能早于 ckBoot，先保证号码可用 */
   var n=Object.keys(state.checkins||{}).length;
-  var cloud=(CK.status!=='nocloud');
   var h='<div class="card ck-card"><div class="title" style="font-size:calc(16px * var(--fz))">数据备份与迁移</div>';
-  h+='<div class="ck-note">换手机或清缓存前，先在这里把记录带走；下面两种方式任选一种。</div>';
-  h+='<div class="ck-line">本机 '+n+' 天 · '+(cloud?('云端 '+CK.remoteCount+' 天'):'本机模式（无云端）')
-      +(CK.lastSync?' · 上次同步 '+CK.lastSync:'')
-      +(CK.busy?' · 同步中':'')
-      +(cloud?'<span class="ck-sync" onclick="ckSync()">立即同步 ›</span>':'')+'</div>';
-  if(cloud){
-    h+='<div class="ck-num" onclick="ckCopy()">档案号 <b>'+ckPretty(CK.code)+'</b><span>'
-       +(CK.copied?'已复制':'复制')+'</span></div>';
-  }
-  if(CK.msg) h+='<div class="ck-tip">'+esc(CK.msg)+'</div>';
-  if(CK.err) h+='<div class="ck-err">'+esc(CK.err)+'。记录仍保存在本机，用下面的备份码一样能带走。</div>';
-  if(!cloud) h+='<div class="ck-tip">当前为本机模式：打卡照常保存在这台设备，跨设备迁移请用备份码。</div>';
+  h+='<div class="ck-note">换手机或清缓存前，先在这里把记录带走；全程不用登录、不用联网。</div>';
+  h+='<div class="ck-line">本机 '+n+' 天 · 本机模式（数据只保存在这台设备）</div>';
   h+=bkCardHtml();
   return h+'</div>';
 }
 
-/* ===== 卡片里唯一的操作区 =====
-   展开态互斥：BK.showOut / BK.showIn / CK.showIn 同一时刻只开一个。 */
+/* ===== 卡片里唯一的操作区：BK.showOut / BK.showIn 两个展开态互斥 ===== */
 function bkCardHtml(){
-  var cloud=(CK.status!=='nocloud');
   var h='<div class="bk-box">';
-  h+='<div class="bk-note">备份码把收藏、积分、答题和打卡一起带走，换设备粘贴回来即可恢复，不用联网。'
-     +(cloud?'档案号只同步打卡日期，联网时自动进行。':'')+'</div>';
+  h+='<div class="bk-note">备份码把收藏、积分、答题和打卡一起带走，换设备粘贴回来即可恢复，不用联网。</div>';
   if(BK.err) h+='<div class="ck-err">'+esc(BK.err)+'</div>';
   if(BK.msg) h+='<div class="ck-tip">'+esc(BK.msg)+'</div>';
 
@@ -33128,24 +32715,15 @@ function bkCardHtml(){
     h+='<div class="bk-btns"><div class="btn" onclick="bkRestore(document.getElementById(&#39;bkIn&#39;).value)">恢复</div>'
       +'<div class="btn-ghost" onclick="bkToggle(\'in\',false)">取消</div></div>';
     h+='<div class="bk-tip">恢复是「合并」：打卡与收藏取并集，积分和成绩只取更好的那份，不会覆盖你现在已有的记录。</div>';
-  } else if(CK.showIn && cloud){
-    h+='<div class="ck-in"><input id="ckIn" placeholder="输入 12 位档案号" maxlength="17" onkeydown="ckEnter(event)" />'
-      +'<div class="btn" onclick="ckAdopt(document.getElementById(&#39;ckIn&#39;).value)">接入</div></div>';
-    h+='<div class="bk-btns"><div class="btn-ghost" onclick="ckShowIn(false)">取消，返回</div></div>';
-    h+='<div class="ck-tip">接入是把那份打卡记录并进本机；要带走全部数据，请返回后点「生成备份码」。</div>';
   } else {
-    /* 一组主按钮：两套方式共用，不再上下各摆一排 */
     h+='<div class="bk-btns"><div class="btn" onclick="bkExport()">生成备份码</div>'
-      +'<div class="btn-ghost" onclick="bkToggle(\'in\',true)">粘贴恢复</div>'
-      +(cloud?'<div class="btn-ghost" onclick="ckShowIn(true)">号码接入</div>':'')
-      +'</div>';
+      +'<div class="btn-ghost" onclick="bkToggle(\'in\',true)">粘贴恢复</div></div>';
   }
   return h+'</div>';
 }
 
 /* ===== 备份导出与恢复（v6.46 · 任务 #15）=====
-   为什么需要它：12 位档案号只存「打卡日期」，而且要走云端。
-   而收藏、积分、答题记录、雷达图数据全在本地 localStorage——
+   为什么需要它：收藏、积分、答题记录、雷达图数据全在本地 localStorage——
    换手机、换浏览器、清缓存，统统归零。用户的积累必须有第二条出路。
    做法：把关键数据编成一段可复制��文本（备份码），用户自己带走；
         在新设备粘贴回来，按「合并」而不是「覆盖」处理。
@@ -33273,7 +32851,7 @@ function bkMerge(p){
 }
 
 function bkExport(){
-  BK.err=''; BK.msg=''; CK.showIn=false;   /* v6.64：与档案号接入互斥 */
+  BK.err=''; BK.msg='';
   try {
     BK.text = bkEncode();
     BK.showOut = true; BK.showIn = false;
@@ -33348,21 +32926,17 @@ function bkRestore(raw){
 function bkToggle(which, v){
   if(which==='out'){ BK.showOut=!!v; BK.showIn=false; }
   else { BK.showIn=!!v; BK.showOut=false; }
-  if(v) CK.showIn=false;                 /* v6.64：与档案号接入互斥 */
   BK.err=''; BK.msg='';
   try{ render(); }catch(_){}
 }
 
 function ckBoot(){
-  ckCodeInit();
-  CK.booted=true;
-  ckSync();
-  /* v6.63：云 SDK 常常比 DOMContentLoaded 晚到，首次 ckSync 只能判成 nocloud。
-     这里最多等 6 秒，SDK 一就绪就重同步一次（ckCloud 每次重新探测，不缓存失败）。
-     干净版 FORCE_LOCAL 没有 SDK，直接跳过等待。 */
+  CK.booted=true; CK.status='nocloud';
+  /* v6.63：保留 SDK 晚到重试结构，确保 AI 初始化链路不被改动；
+     v6.65 起这里不再触发任何云端打卡同步。 */
   var tries=0;
   (function waitCloud(){
-    if(ckCloud()){ ckSync(); return; }
+    if(typeof WorkBuddyCloud!=='undefined' && WorkBuddyCloud.createWorkBuddyCloud) return;
     if(++tries<=12 && !(window.AI_CONFIG && window.AI_CONFIG.FORCE_LOCAL)) setTimeout(waitCloud,500);
   })();
 }
@@ -33373,7 +32947,7 @@ else setTimeout(ckBoot, 0);
 /* ===== 新手引导 =====
    开场给两个选项，对应两类人：
    · 新手  → 6 步，一个模块一步，讲清「这个模块能干什么、怎么点」；
-   · 老用户 → 直接落到「我的」，并把接入输入框打开，输完就能接回连续打卡。
+   · 老用户 → 直接落到「我的」，打开备份码恢复框，粘贴一段文字就接回记录。
    只在首次自动弹（localStorage 记一笔）；之后任何时候都能从「我的 → 设置与隐私 → 新手引导」重看。
    引导打开期间把 3D 星图暂停（G.active=false），省电也省帧——它被盖住了，没必要继续画。 */
 (function () {
@@ -33440,12 +33014,12 @@ else setTimeout(ckBoot, 0);
     {
       k: 'profile', ic: '🔑', title: '换手机，记录也不丢',
       items: [
-        ['备份码：一次带走全部', '在「我的 → 数据备份与迁移」生成一段文字，收藏、积分、答题和打卡一起带走，不用联网。'],
-        ['档案号：联网自动同步', '有云端时会自动生成 12 位号码并同步打卡日期；在新设备输号码就能接回。'],
-        ['请自己留存', '备份码和号码都只保存在本机，相当于这把锁的钥匙；建议存进备忘录，别公开分享。']
+        ['生成备份码', '在「我的 → 数据备份与迁移」点「生成备份码」，收藏、积分、答题和打卡一次带走。'],
+        ['粘贴就恢复', '新设备打开同一页，点「粘贴恢复」把那段文字贴回去；按合并方式接回，不用登录、不用联网。'],
+        ['请自己留存', '备份码就是这把锁的钥匙，谁拿到都能恢复；建议存进备忘录或发给自己，别公开分享。']
       ],
-      tip: '两种方式都在同一张卡里：想带走全部数据用备份码，只想接回打卡用档案号。',
-      cta: '去接入旧记录',
+      tip: '这一张卡就够了：生成一段文字带走，粘贴一段文字接回。',
+      cta: '去恢复旧记录',
       ctaFn: 'gdSkip()',
       alt: '先随便逛逛',
       altFn: 'gdClose()'
@@ -33481,8 +33055,8 @@ else setTimeout(ckBoot, 0);
       +   '</div>'
       +   '<div class="gd-opt" onclick="gdSkip()">'
       +     '<div class="gd-oi">🔑</div>'
-      +     '<div class="gd-om"><div class="gd-ot">跳过引导，接回旧记录</div>'
-      +       '<div class="gd-os">已有记录？到「我的 → 数据备份与迁移」粘贴备份码或输号码</div></div>'
+      +     '<div class="gd-om"><div class="gd-ot">跳过引导，恢复旧记录</div>'
+      +       '<div class="gd-os">已有记录？到「我的 → 数据备份与迁移」粘贴备份码即可恢复</div></div>'
       +     '<div class="gd-arrow">›</div>'
       +   '</div>'
       + '</div>'
@@ -33586,20 +33160,18 @@ else setTimeout(ckBoot, 0);
     if (goHome !== false && typeof goTab === 'function') goTab(GD.from || 'home');
   }
 
-  /* 跳过引导：落到「我的」，按当前模式打开对应的接回入口并滚到眼前。
-     v6.64：有云端 → 号码接入；本机模式 → 粘贴备份码恢复（号码在那版无效）。 */
+  /* 跳过引导：落到「我的」，直接展开备份码恢复框并滚到眼前（v6.65）。 */
   function skip() {
     markSeen();
     hide();
     if (typeof goTab === 'function') goTab('profile');
-    if (typeof CK !== 'undefined' && CK.status !== 'nocloud' && typeof ckShowIn === 'function') ckShowIn(true);
-    else if (typeof bkToggle === 'function') bkToggle('in', true);
+    if (typeof bkToggle === 'function') bkToggle('in', true);
     setTimeout(function () {
       var card = document.querySelector('.ck-card');
       if (card && card.scrollIntoView) {
         try { card.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) { card.scrollIntoView(); }
       }
-      var inp = document.getElementById('ckIn') || document.getElementById('bkIn');
+      var inp = document.getElementById('bkIn');
       if (inp && inp.focus) { try { inp.focus(); } catch (e) {} }
     }, 120);
   }
