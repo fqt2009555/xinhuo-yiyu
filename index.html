@@ -1412,6 +1412,8 @@
     padding: 8px 9px; max-height: 110px; overflow: auto;
     word-break: break-all; user-select: all; -webkit-user-select: all;
   }
+  /* v6.63：备份码改成只读文本框，手机可长按全选复制 */
+  .ck-card .bk-code.bk-out { width:100%; box-sizing:border-box; resize:vertical; }
   .phone.day .ck-card .bk-code { color:#1F7A45; background: rgba(0,0,0,.05); border-color: rgba(31,143,69,.24); }
   .ck-card .bk-ta {
     width: 100%; resize: vertical; font-family: ui-monospace, Menlo, Consolas, monospace;
@@ -1618,7 +1620,11 @@
     s.onload = function () {
       if (settled) return;
       settled = true; clearTimeout(timer);
+      /* v6.63：云 SDK 是异步注入的，DOMContentLoaded 时往往还没到。
+         首次 initAI / ckBoot 已经跑过，必须在这里再触发一次，
+         否则 AI 一直停在「正在连接」、打卡档案一直显示 nocloud。 */
       if (window.initAI) window.initAI();
+      if (window.ckSync) window.ckSync();
     };
     s.onerror = function () {
       if (settled) return;
@@ -1640,7 +1646,7 @@
     <span id="navTitle">薪火医语</span>
     <!-- v6.48：版本号挪进顶栏右侧空白区。原来挂在 .phone 上 bottom:6px，
          正好压在底部标签栏的「我的」上（真机截图实测）。 -->
-    <span class="ver" title="构建标识">v6.62</span>
+    <span class="ver" title="构建标识">v6.63</span>
   </div>
 
   <div class="screen" id="screen"></div>
@@ -25178,11 +25184,14 @@ function matchAnswer(q){ var r=localRetrieve(q,{}); return localFallback(r); }
 
 /* ============ 免密钥大模型封装（CDN 全局 WorkBuddyCloud） ============ */
 function initAI(){
-  if(AI.tried) return;
+  if(AI.ready) return;
   if(!aiEnabled()){ updateQaHint(); return; }   /* 省额度模式不建立连接，零请求零消耗 */
-  AI.tried=true;
   try{
+    /* v6.63 竞态修复：SDK 异步注入，DOMContentLoaded 时常常还没加载完。
+       以前一进来就把 AI.tried 置 true，SDK 到了再调 initAI 会被幂等标志挡掉，
+       结果永远连不上模型。现在只有 SDK 真正就绪才标记「已尝试」。 */
     if(typeof WorkBuddyCloud==='undefined' || !WorkBuddyCloud.createWorkBuddyCloud){ updateQaHint(); return; }
+    AI.tried=true;
     AI.cloud=WorkBuddyCloud.createWorkBuddyCloud({
       endpoint:AI_PUBLIC.endpoint, oauthRelayBaseUrl:AI_PUBLIC.oauthRelayBaseUrl, publishableKey:AI_PUBLIC.publishableKey
     });
@@ -25211,7 +25220,7 @@ function initAI(){
         updateQaHint();
       })['catch'](function(){ updateQaHint(); });
     }
-  }catch(e){ AI.cloud=null; AI.ready=false; updateQaHint(); }
+  }catch(e){ AI.cloud=null; AI.ready=false; AI.tried=false; updateQaHint(); }
 }
 /* 防注入：剥离控制字符、限制长度；system 与 user 分离，用户输入绝不进 system */
 function cleanUserInput(q){
@@ -25316,7 +25325,8 @@ function aiEnabled(){
 function toggleAiMode(){
   if (window.AI_CONFIG && window.AI_CONFIG.FORCE_LOCAL) return;  /* 干净版不提供联网切换 */
   try{ localStorage.setItem(AI_MODE_KEY, aiEnabled()?'local':'ai'); }catch(e){}
-  if(aiEnabled()) initAI();          /* 切到 AI 模式时才连接模型 */
+  /* v6.63：从「仅本地」切回 AI 时清掉上次失败状态，允许重新连接 */
+  if(aiEnabled()){ AI.tried=false; AI.cloud=null; initAI(); }
   if(typeof render==='function') render();
   updateQaHint(); qaScroll();
 }
@@ -26934,7 +26944,7 @@ function timeoutWrong(){
 }
 
 /* 版本号：显示在「我的」页底部，用来确认手机上打开的是不是最新版（缓存排查用） */
-var APP_VER='v6.62';
+var APP_VER='v6.63';
 /* 右下角构建标识跟着版本号走：以前写死在 HTML 里，升版会忘了改，截图对不上号 */
 (function(){
   function sync(){ var el=document.querySelector('.ver'); if(el) el.textContent=APP_VER; }
@@ -31018,8 +31028,7 @@ function renderProfile(){
       +'<div class="fs-seg" id="fsSeg">'
       +fsSegButtons()
       +'</div></div>'
-      +'<div class="row" onclick="if(window.toggleHighContrast)toggleHighContrast()"><span>高对比度</span><span class="theme-toggle" id="hcToggle">'+(window.highContrastOn&&highContrastOn()?'已开启':'关闭')+'</span></div>'
-      +'<div class="row" onclick="alert(\'「薪火医语」为院庆杯 C 赛道参赛作品\')"><span>关于「薪火医语」</span><span class="muted">院庆杯 C 赛道作品</span></div></div>';
+      +'<div class="row" onclick="if(window.toggleHighContrast)toggleHighContrast()"><span>高对比度</span><span class="theme-toggle" id="hcToggle">'+(window.highContrastOn&&highContrastOn()?'已开启':'关闭')+'</span></div></div>';
   html+='<div class="foot">版本 '+APP_VER+' · 本小程序内容仅用于健康科普，不替代专业诊疗。</div></div>';
   return html;
 }
@@ -33164,13 +33173,16 @@ function ckCardHtml(){
   var h='<div class="card ck-card"><div class="title" style="font-size:calc(16px * var(--fz))">打卡档案</div>';
   h+='<div class="ck-note">一个号码对应一份记录。换手机或清缓存后，在新设备输入这个号码即可接回。</div>';
   h+='<div class="ck-code" onclick="ckCopy()"><b>'+ckPretty(CK.code)+'</b><span>'+(CK.copied?'已复制':'复制')+'</span></div>';
-  h+='<div class="ck-line">本机 '+n+' 天 · 云端 '+CK.remoteCount+' 天'
+  h+='<div class="ck-line">本机 '+n+' 天 · '+(CK.status==='nocloud'?'云端未连接（本机模式）':('云端 '+CK.remoteCount+' 天'))
       +(CK.lastSync?' · 上次同步 '+CK.lastSync:'')
       +(CK.busy?' · 同步中':'')+'</div>';
   if(CK.msg) h+='<div class="ck-tip">'+esc(CK.msg)+'</div>';
-  if(CK.err) h+='<div class="ck-err">'+esc(CK.err)+'</div>';
+  if(CK.err) h+='<div class="ck-err">'+esc(CK.err)+'。记录仍保存在本机，可用下面的「离线备份码」带走。</div>';
   if(CK.status==='nocloud'){
-    h+='<div class="ck-err">云端组件未加载（网络受限）。打卡仍可正常使用，记录暂时只存在本机。</div>';
+    /* v6.63：零依赖版本本来就没有云端，别再让用户去点必然失败的「同步 / 接入」按钮。
+       号码仍可作为本机档案编号展示，跨设备迁移统一交给离线备份码。 */
+    h+='<div class="ck-tip">当前为本机模式：号码只在这台设备有效，打卡会正常保存。'
+       +'换手机 / 清缓存，请用下面的「离线备份码」生成一段文字带走。</div>';
   } else if(CK.showIn){
     h+='<div class="ck-in"><input id="ckIn" placeholder="输入 12 位档案号" maxlength="17" onkeydown="ckEnter(event)" />'
       +'<div class="btn" onclick="ckAdopt(document.getElementById(&#39;ckIn&#39;).value)">接入</div></div>';
@@ -33198,10 +33210,13 @@ function bkCardHtml(){
   if(BK.msg) h+='<div class="ck-tip">'+esc(BK.msg)+'</div>';
 
   if(BK.showOut){
-    h+='<div class="bk-code" id="bkCode">'+esc(BK.text)+'</div>';
+    /* v6.63：原来是不可编辑的 div，手机浏览器里 clipboard 复制失败就彻底拿不走。
+       改成只读文本框：可长按全选、可一键复制、可保存为文件，三条路都走得通。 */
+    h+='<textarea class="bk-code bk-out" id="bkCode" readonly rows="4" onclick="this.select()">'+esc(BK.text)+'</textarea>';
     h+='<div class="bk-btns"><div class="btn" onclick="bkCopy()">'+(BK.copied?'已复制':'复制备份码')+'</div>'
+      +'<div class="btn-ghost" onclick="bkDownload()">保存为文件</div>'
       +'<div class="btn-ghost" onclick="bkToggle(\'out\',false)">收起</div></div>';
-    h+='<div class="bk-tip">复制后存到微信收藏、备忘录或发给自己。'
+    h+='<div class="bk-tip">复制后存到微信收藏、备忘录或发给自己；也可点「保存为文件」。'
       +'这段文字就是你的数据，谁拿到都能恢复，所以别转发给不熟悉的人。</div>';
   } else if(BK.showIn){
     h+='<textarea class="bk-ta" id="bkIn" placeholder="把备份码粘贴到这里" rows="3"></textarea>';
@@ -33351,6 +33366,8 @@ function bkExport(){
     BK.showOut = true; BK.showIn = false;
     try{ render(); }catch(_){}
     bkCopy();
+    /* 复制受限时，至少把文本框选中，方便用户直接长按复制 */
+    setTimeout(function(){ var el=document.getElementById('bkCode'); if(el){ el.focus(); el.select(); } },80);
   } catch(e) {
     BK.err='生成备份码失败：'+(e&&e.message||'未知错误');
     try{ render(); }catch(_){}
@@ -33364,8 +33381,9 @@ function bkCopy(){
     BK.copied = true; try{ render(); }catch(_){}
     setTimeout(function(){ BK.copied=false; try{ render(); }catch(_){} },1800);
   };
+  var manual = function(){ BK.msg='自动复制没成功，请长按上方文本框手动复制，或点「保存为文件」'; try{ render(); }catch(_){} };
   if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(t).then(done, function(){ BK.msg='请长按下方文本框手动复制'; try{ render(); }catch(_){} });
+    navigator.clipboard.writeText(t).then(done, manual);
   } else {
     /* 非安全上下文没有 clipboard API，退回 execCommand */
     try{
@@ -33374,10 +33392,28 @@ function bkCopy(){
       document.body.appendChild(ta); ta.select();
       var ok=document.execCommand('copy');
       document.body.removeChild(ta);
-      if(ok) done(); else BK.msg='请长按下方文本框手动复制';
-    }catch(e){ BK.msg='请长按下方文本框手动复制'; }
+      if(ok) done(); else manual();
+    }catch(e){ manual(); }
     try{ render(); }catch(_){}
   }
+}
+
+/* v6.63：手机上直接复制经常受浏览器限制，给第二条出路——
+   把备份码保存成 txt 文件；若手机不响应下载，仍可长按文本框复制。 */
+function bkDownload(){
+  var t = BK.text;
+  if(!t){ BK.err='还没有生成备份码'; try{ render(); }catch(_){} return; }
+  try{
+    var blob=new Blob([t],{type:'text/plain;charset=utf-8'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url; a.download='薪火医语-备份-'+bkToday()+'.txt';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(_){}
+      if(a.parentNode) a.parentNode.removeChild(a); },1000);
+    BK.msg='已生成备份文件；若手机没有弹出保存，请长按上方文本框复制后存到微信收藏。';
+  }catch(e){ BK.msg='这个浏览器不支持保存文件，请长按上方文本框手动复制。'; }
+  try{ render(); }catch(_){}
 }
 
 function bkRestore(raw){
@@ -33407,6 +33443,14 @@ function ckBoot(){
   ckCodeInit();
   CK.booted=true;
   ckSync();
+  /* v6.63：云 SDK 常常比 DOMContentLoaded 晚到，首次 ckSync 只能判成 nocloud。
+     这里最多等 6 秒，SDK 一就绪就重同步一次（ckCloud 每次重新探测，不缓存失败）。
+     干净版 FORCE_LOCAL 没有 SDK，直接跳过等待。 */
+  var tries=0;
+  (function waitCloud(){
+    if(ckCloud()){ ckSync(); return; }
+    if(++tries<=12 && !(window.AI_CONFIG && window.AI_CONFIG.FORCE_LOCAL)) setTimeout(waitCloud,500);
+  })();
 }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', ckBoot);
 else setTimeout(ckBoot, 0);
